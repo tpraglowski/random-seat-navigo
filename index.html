@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Random Seat Navigo</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">🎲</span>
+      <span class="brand-name">Random Seat <em>Navigo</em></span>
+    </div>
+    <button id="printBtn" class="ghost-btn" title="Drukuj plan sali">🖨️ Drukuj</button>
+  </header>
+
+  <main class="layout">
+    <section class="panel" aria-label="Ustawienia">
+      <h2>Uczniowie</h2>
+      <p class="hint">Wpisz jedno imię i nazwisko w każdej linii.</p>
+      <textarea id="namesInput" rows="12" placeholder="Jan Kowalski&#10;Anna Nowak&#10;..."></textarea>
+      <div class="count-row">
+        <span id="nameCount">0 uczniów</span>
+      </div>
+
+      <h2>Sala</h2>
+      <div class="grid-controls">
+        <label>
+          Rzędy
+          <input type="number" id="rowsInput" min="1" max="12" value="4" />
+        </label>
+        <label>
+          Miejsca w rzędzie
+          <input type="number" id="colsInput" min="1" max="10" value="6" />
+        </label>
+      </div>
+      <p class="hint">Kliknij miejsce na planie, żeby je zablokować (np. zepsute krzesło) lub odblokować.</p>
+
+      <div class="actions">
+        <button id="shuffleBtn" class="primary-btn">🔀 Losuj miejsca</button>
+        <button id="resetBtn" class="ghost-btn">↺ Wyczyść plan</button>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Plan sali">
+      <div class="board-wrap">
+        <div class="board-front">TABLICA</div>
+        <div id="board" class="board"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>Dane zapisują się tylko lokalnie w Twojej przeglądarce.</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
