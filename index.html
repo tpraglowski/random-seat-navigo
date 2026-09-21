@@ -13,13 +13,20 @@
       <span class="brand-mark">🎲</span>
       <span class="brand-name">Random Seat <em>Navigo</em></span>
     </div>
-    <button id="printBtn" class="ghost-btn" title="Drukuj plan sali">🖨️ Drukuj</button>
   </header>
 
   <main class="layout">
     <section class="panel" aria-label="Ustawienia">
+      <h2>Klasa</h2>
+      <div class="class-row">
+        <select id="classSelect"></select>
+        <button id="addClassBtn" class="icon-btn" title="Dodaj klasę">➕</button>
+        <button id="renameClassBtn" class="icon-btn" title="Zmień nazwę klasy">✎</button>
+        <button id="deleteClassBtn" class="icon-btn" title="Usuń klasę">🗑</button>
+      </div>
+
       <h2>Uczniowie</h2>
-      <p class="hint">Wpisz jedno imię i nazwisko w każdej linii.</p>
+      <p class="hint">Edytuj listę uczniów wybranej klasy — jedno imię i nazwisko w każdej linii.</p>
       <textarea id="namesInput" rows="12" placeholder="Jan Kowalski&#10;Anna Nowak&#10;..."></textarea>
       <div class="count-row">
         <span id="nameCount">0 uczniów</span>
