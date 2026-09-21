@@ -35,6 +35,14 @@ const constraintB = document.getElementById("constraintB");
 const addConstraintBtn = document.getElementById("addConstraintBtn");
 const constraintList = document.getElementById("constraintList");
 const syncStatus = document.getElementById("syncStatus");
+const sidebar = document.getElementById("sidebar");
+const sidebarToggle = document.getElementById("sidebarToggle");
+
+const SIDEBAR_COLLAPSED_KEY = "random-seat-navigo-sidebar-collapsed";
+
+function capitalizeWords(text) {
+  return text.replace(/(^|\s)(\p{L})/gu, (m, pre, letter) => pre + letter.toLocaleUpperCase("pl"));
+}
 
 function makeClass() {
   return { names: "", rows: 4, cols: 6, blocked: [], assignment: {}, constraints: [] };
@@ -129,17 +137,19 @@ function renderBoard() {
       seat.className = "seat";
       seat.dataset.key = key;
 
+      let label;
       if (cls.blocked.includes(key)) {
         seat.classList.add("blocked");
-        seat.textContent = "—";
+        label = "—";
       } else if (cls.assignment[key]) {
         seat.classList.add("filled");
-        seat.textContent = cls.assignment[key];
+        label = cls.assignment[key];
       } else {
         seat.classList.add("empty");
-        seat.textContent = "puste";
+        label = "puste";
       }
 
+      seat.innerHTML = `<span class="wing left"></span><span class="center">${escapeHtml(label)}</span><span class="wing right"></span>`;
       seat.addEventListener("click", () => toggleBlocked(key));
       board.appendChild(seat);
     }
@@ -317,9 +327,15 @@ function isModalOpen() {
 // ---------- Events ----------
 
 namesInput.addEventListener("input", () => {
-  currentClass().names = namesInput.value;
+  const cursor = namesInput.selectionStart;
+  const capitalized = capitalizeWords(namesInput.value);
+  if (capitalized !== namesInput.value) {
+    namesInput.value = capitalized;
+    namesInput.setSelectionRange(cursor, cursor);
+  }
+  currentClass().names = capitalized;
   saveClasses();
-  const count = getNames(namesInput.value).length;
+  const count = getNames(capitalized).length;
   nameCount.textContent = `${count} ${count === 1 ? "uczeń" : "uczniów"}`;
   renderConstraintOptions();
 });
@@ -426,6 +442,19 @@ addConstraintBtn.addEventListener("click", () => {
   saveClasses(true);
   renderConstraintList();
 });
+
+sidebarToggle.addEventListener("click", () => {
+  const collapsed = sidebar.classList.toggle("collapsed");
+  try {
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0");
+  } catch {
+    // ignore
+  }
+});
+
+if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1") {
+  sidebar.classList.add("collapsed");
+}
 
 // ---------- Firebase init & live sync ----------
 

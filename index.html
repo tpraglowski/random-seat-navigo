@@ -8,54 +8,59 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark">🎲</span>
-      <span class="brand-name">Random Seat <em>Navigo</em></span>
-    </div>
-    <span class="sync-status" id="syncStatus">Łączenie…</span>
-  </header>
-
-  <main class="layout">
-    <section class="panel" aria-label="Ustawienia">
-      <h2>Klasa</h2>
-      <div class="class-row">
-        <select id="classSelect"></select>
-        <button id="addClassBtn" class="icon-btn" title="Nowa klasa">➕</button>
-        <button id="editClassBtn" class="icon-btn" title="Edytuj klasę">✎</button>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <div class="brand">
+          <span class="brand-mark">🎲</span>
+          <span class="brand-name">Random Seat <em>Navigo</em></span>
+        </div>
+        <button id="sidebarToggle" class="icon-btn toggle-btn" title="Zwiń panel">‹</button>
       </div>
-      <p class="hint" id="classSummary">0 uczniów</p>
 
-      <h2>Sala</h2>
-      <div class="grid-controls">
-        <label>
-          Rzędy
-          <input type="number" id="rowsInput" min="1" max="12" value="4" />
-        </label>
-        <label>
-          Miejsca w rzędzie
-          <input type="number" id="colsInput" min="1" max="10" value="6" />
-        </label>
+      <div class="sidebar-body" id="sidebarBody">
+        <h2>Klasa</h2>
+        <div class="class-row">
+          <select id="classSelect"></select>
+          <button id="addClassBtn" class="icon-btn" title="Nowa klasa">➕</button>
+          <button id="editClassBtn" class="icon-btn" title="Edytuj klasę">✎</button>
+        </div>
+        <p class="hint" id="classSummary">0 uczniów</p>
+
+        <h2>Sala</h2>
+        <div class="grid-controls">
+          <label>
+            Rzędy
+            <input type="number" id="rowsInput" min="1" max="12" value="4" />
+          </label>
+          <label>
+            Miejsca w rzędzie
+            <input type="number" id="colsInput" min="1" max="10" value="6" />
+          </label>
+        </div>
+        <p class="hint">Kliknij miejsce na planie, żeby je zablokować lub odblokować.</p>
+        <button id="resetBtn" class="ghost-btn full-btn">↺ Wyczyść plan</button>
+
+        <p class="sync-status" id="syncStatus"></p>
       </div>
-      <p class="hint">Kliknij miejsce na planie, żeby je zablokować (np. zepsute krzesło) lub odblokować.</p>
 
-      <div class="actions">
-        <button id="shuffleBtn" class="primary-btn">🔀 Losuj miejsca</button>
-        <button id="resetBtn" class="ghost-btn">↺ Wyczyść plan</button>
+      <div class="sidebar-foot">
+        <button id="shuffleBtn" class="losuj-btn" title="Losuj miejsca">
+          <span class="losuj-icon">🔀</span>
+          <span class="losuj-label">Losuj</span>
+        </button>
       </div>
-    </section>
+    </aside>
 
-    <section class="stage" aria-label="Plan sali">
+    <main class="stage" aria-label="Plan sali">
       <div class="board-wrap">
         <div class="board-front">TABLICA</div>
-        <div id="board" class="board"></div>
+        <div class="board-scroll">
+          <div id="board" class="board"></div>
+        </div>
       </div>
-    </section>
-  </main>
-
-  <footer class="foot">
-    <span>Dane zapisują się w chmurze (Firebase) i są widoczne na każdym urządzeniu.</span>
-  </footer>
+    </main>
+  </div>
 
   <div class="modal-overlay hidden" id="editModal">
     <div class="modal" role="dialog" aria-modal="true" aria-label="Edytuj klasę">
@@ -71,7 +76,7 @@
         </div>
 
         <h3>Uczniowie</h3>
-        <p class="hint">Jedno imię i nazwisko w każdej linii.</p>
+        <p class="hint">Jedno imię i nazwisko w każdej linii. Wielkie litery na początku słów dodają się same.</p>
         <textarea id="namesInput" rows="10" placeholder="Jan Kowalski&#10;Anna Nowak&#10;..."></textarea>
         <div class="count-row">
           <span id="nameCount">0 uczniów</span>
