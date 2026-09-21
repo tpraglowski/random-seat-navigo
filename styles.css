@@ -273,7 +273,11 @@ textarea {
   cursor: pointer;
   user-select: none;
   transform: rotate(var(--angle));
-  transform-origin: 50% -30px;
+  /* The pivot sits far above the shape, at the point where the trapezoid's two
+     slanted sides would meet if extended — so rotating by the trapezoid's own
+     angular width (see fanStep in script.js) tiles copies with zero gap and
+     zero overlap, edges landing exactly on top of each other. */
+  transform-origin: 50% -71.78px;
 }
 
 .desk-shape {

@@ -153,7 +153,10 @@ function renderBoard() {
     clusterEl.style.top = `${cluster.y}%`;
 
     const roles = rolesOf(cluster);
-    const fanStep = 40; // degrees between adjacent petals
+    // Angular width of the trapezoid as seen from the shared pivot 71.78px above it
+    // (atan((topWidth/2) / pivotDistance) * 2) — rotating by exactly this many
+    // degrees makes each petal's edge land exactly on its neighbor's edge.
+    const fanStep = 29.67;
     const mid = (roles.length - 1) / 2;
     // Draw the petals furthest from center first so the middle one paints on
     // top and its label is never covered by its neighbors.
