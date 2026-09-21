@@ -246,84 +246,76 @@ textarea {
 }
 
 .board {
-  display: inline-grid;
-  gap: 18px 10px;
-  justify-content: center;
-  min-width: 100%;
+  position: relative;
+  width: 900px;
+  height: 560px;
+  max-width: 100%;
 }
 
-.seat {
-  --seat-fill: var(--seat-bg);
-  --seat-edge: var(--seat-border);
-  position: relative;
+.cluster {
+  position: absolute;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: stretch;
-  height: 62px;
-  min-width: 118px;
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.1s ease;
+  height: 68px;
 }
 
-.seat:hover { transform: translateY(-2px); }
-
-.seat .wing {
-  flex: 0 0 26%;
+.desk {
+  --seat-fill: var(--seat-bg);
+  --seat-edge: var(--seat-border);
   background: var(--seat-fill);
   border: 1px solid var(--seat-edge);
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.seat .wing.left {
-  margin-right: 4px;
-  clip-path: polygon(0 32%, 100% 0, 100% 100%, 0 68%);
-}
-
-.seat .wing.right {
-  margin-left: 4px;
-  clip-path: polygon(100% 32%, 0 0, 0 100%, 100% 68%);
-}
-
-.seat .center {
-  flex: 1;
-  min-width: 0;
-  background: var(--seat-fill);
-  border: 1px solid var(--seat-edge);
-  clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   line-height: 1.15;
   padding: 4px 6px;
   overflow: hidden;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
 
-.seat.empty {
-  --seat-fill: var(--seat-bg);
-  --seat-edge: var(--seat-border);
+.desk:hover { transform: translateY(-2px); }
+
+.desk.role-left {
+  width: 72px;
+  margin-right: 4px;
+  clip-path: polygon(0 32%, 100% 0, 100% 100%, 0 68%);
 }
-.seat.empty .center {
+
+.desk.role-right {
+  width: 72px;
+  margin-left: 4px;
+  clip-path: polygon(100% 32%, 0 0, 0 100%, 100% 68%);
+}
+
+.desk.role-center {
+  width: 86px;
+  clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%);
+}
+
+.desk.empty {
   color: var(--muted);
   font-weight: 500;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
 }
 
-.seat.blocked {
+.desk.blocked {
   --seat-fill: var(--seat-blocked);
   --seat-edge: var(--seat-blocked-border);
+  color: var(--muted);
   cursor: not-allowed;
 }
-.seat.blocked .center { color: var(--muted); }
 
-.seat.filled {
+.desk.filled {
   --seat-fill: color-mix(in srgb, var(--accent) 20%, var(--seat-bg));
   --seat-edge: var(--accent);
+  color: var(--ink);
 }
-.seat.filled .center { color: var(--ink); }
 
 .foot {
   text-align: center;

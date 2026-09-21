@@ -16,8 +16,6 @@ const CURRENT_CLASS_KEY = 'random-seat-navigo-current-class';
 
 const namesInput = document.getElementById("namesInput");
 const nameCount = document.getElementById("nameCount");
-const rowsInput = document.getElementById("rowsInput");
-const colsInput = document.getElementById("colsInput");
 const board = document.getElementById("board");
 const shuffleBtn = document.getElementById("shuffleBtn");
 const resetBtn = document.getElementById("resetBtn");
@@ -44,8 +42,31 @@ function capitalizeWords(text) {
   return text.replace(/(^|\s)(\p{L})/gu, (m, pre, letter) => pre + letter.toLocaleUpperCase("pl"));
 }
 
+// Fixed room layout: 6 clusters of desks positioned like the reference sketch —
+// five 3-desk clusters plus one 2-desk cluster, scattered rather than a grid.
+// x/y are percentages within the .board canvas.
+const DESK_LAYOUT = [
+  { id: "A", desks: 2, x: 12, y: 30 },
+  { id: "B", desks: 3, x: 38, y: 22 },
+  { id: "C", desks: 3, x: 75, y: 32 },
+  { id: "D", desks: 3, x: 36, y: 55 },
+  { id: "E", desks: 3, x: 75, y: 68 },
+  { id: "F", desks: 3, x: 36, y: 82 },
+];
+
+function rolesOf(cluster) {
+  return cluster.desks === 2 ? ["left", "center"] : ["left", "center", "right"];
+}
+
+const ALL_DESK_IDS = DESK_LAYOUT.flatMap((cluster) => rolesOf(cluster).map((role) => `${cluster.id}-${role}`));
+
+function neighborsOf(deskId) {
+  const clusterId = deskId.split("-")[0];
+  return ALL_DESK_IDS.filter((id) => id !== deskId && id.startsWith(`${clusterId}-`));
+}
+
 function makeClass() {
-  return { names: "", rows: 4, cols: 6, blocked: [], assignment: {}, constraints: [] };
+  return { names: "", blocked: [], assignment: {}, constraints: [] };
 }
 
 function defaultClasses() {
@@ -82,10 +103,6 @@ function getNames(text) {
     .split("\n")
     .map((n) => n.trim())
     .filter(Boolean);
-}
-
-function seatKey(r, c) {
-  return `${r}-${c}`;
 }
 
 function escapeHtml(str) {
@@ -127,39 +144,37 @@ function renderClassSummary() {
 
 function renderBoard() {
   const cls = currentClass();
-  board.style.gridTemplateColumns = `repeat(${cls.cols}, 1fr)`;
   board.innerHTML = "";
 
-  for (let r = 0; r < cls.rows; r++) {
-    for (let c = 0; c < cls.cols; c++) {
-      const key = seatKey(r, c);
-      const seat = document.createElement("div");
-      seat.className = "seat";
-      seat.dataset.key = key;
+  DESK_LAYOUT.forEach((cluster) => {
+    const clusterEl = document.createElement("div");
+    clusterEl.className = "cluster";
+    clusterEl.style.left = `${cluster.x}%`;
+    clusterEl.style.top = `${cluster.y}%`;
 
-      let label;
-      if (cls.blocked.includes(key)) {
-        seat.classList.add("blocked");
-        label = "—";
-      } else if (cls.assignment[key]) {
-        seat.classList.add("filled");
-        label = cls.assignment[key];
+    rolesOf(cluster).forEach((role) => {
+      const deskId = `${cluster.id}-${role}`;
+      const desk = document.createElement("div");
+      desk.className = `desk role-${role}`;
+      desk.dataset.key = deskId;
+
+      if (cls.blocked.includes(deskId)) {
+        desk.classList.add("blocked");
+        desk.textContent = "—";
+      } else if (cls.assignment[deskId]) {
+        desk.classList.add("filled");
+        desk.textContent = cls.assignment[deskId];
       } else {
-        seat.classList.add("empty");
-        label = "puste";
+        desk.classList.add("empty");
+        desk.textContent = "puste";
       }
 
-      seat.innerHTML = `<span class="wing left"></span><span class="center">${escapeHtml(label)}</span><span class="wing right"></span>`;
-      seat.addEventListener("click", () => toggleBlocked(key));
-      board.appendChild(seat);
-    }
-  }
-}
+      desk.addEventListener("click", () => toggleBlocked(deskId));
+      clusterEl.appendChild(desk);
+    });
 
-function renderRoomFields() {
-  const cls = currentClass();
-  rowsInput.value = cls.rows;
-  colsInput.value = cls.cols;
+    board.appendChild(clusterEl);
+  });
 }
 
 function renderConstraintOptions() {
@@ -192,7 +207,6 @@ function renderConstraintList() {
 function renderMain() {
   renderClassSelect();
   renderClassSummary();
-  renderRoomFields();
   renderBoard();
 }
 
@@ -216,19 +230,7 @@ function shuffleArray(arr) {
   return a;
 }
 
-function neighborsOf(key, rows, cols) {
-  const [r, c] = key.split("-").map(Number);
-  return [
-    [r - 1, c],
-    [r + 1, c],
-    [r, c - 1],
-    [r, c + 1],
-  ]
-    .filter(([rr, cc]) => rr >= 0 && rr < rows && cc >= 0 && cc < cols)
-    .map(([rr, cc]) => seatKey(rr, cc));
-}
-
-function countViolations(assignment, constraints, rows, cols) {
+function countViolations(assignment, constraints) {
   const seatOf = {};
   for (const [seat, name] of Object.entries(assignment)) seatOf[name] = seat;
   let violations = 0;
@@ -236,7 +238,7 @@ function countViolations(assignment, constraints, rows, cols) {
     const seatA = seatOf[a];
     const seatB = seatOf[b];
     if (!seatA || !seatB) continue;
-    if (neighborsOf(seatA, rows, cols).includes(seatB)) violations++;
+    if (neighborsOf(seatA).includes(seatB)) violations++;
   }
   return violations;
 }
@@ -244,13 +246,7 @@ function countViolations(assignment, constraints, rows, cols) {
 function shuffleSeats() {
   const cls = currentClass();
   const names = getNames(cls.names);
-  const availableSeats = [];
-  for (let r = 0; r < cls.rows; r++) {
-    for (let c = 0; c < cls.cols; c++) {
-      const key = seatKey(r, c);
-      if (!cls.blocked.includes(key)) availableSeats.push(key);
-    }
-  }
+  const availableSeats = ALL_DESK_IDS.filter((id) => !cls.blocked.includes(id));
 
   if (!names.length || !availableSeats.length) {
     cls.assignment = {};
@@ -270,7 +266,7 @@ function shuffleSeats() {
     shuffledNames.slice(0, shuffledSeats.length).forEach((name, idx) => {
       assignment[shuffledSeats[idx]] = name;
     });
-    const violations = countViolations(assignment, cls.constraints, cls.rows, cls.cols);
+    const violations = countViolations(assignment, cls.constraints);
     if (violations < bestViolations) {
       bestViolations = violations;
       best = assignment;
@@ -338,22 +334,6 @@ namesInput.addEventListener("input", () => {
   const count = getNames(capitalized).length;
   nameCount.textContent = `${count} ${count === 1 ? "uczeń" : "uczniów"}`;
   renderConstraintOptions();
-});
-
-rowsInput.addEventListener("change", () => {
-  const cls = currentClass();
-  cls.rows = Math.max(1, Math.min(12, parseInt(rowsInput.value, 10) || 1));
-  rowsInput.value = cls.rows;
-  saveClasses(true);
-  renderBoard();
-});
-
-colsInput.addEventListener("change", () => {
-  const cls = currentClass();
-  cls.cols = Math.max(1, Math.min(10, parseInt(colsInput.value, 10) || 1));
-  colsInput.value = cls.cols;
-  saveClasses(true);
-  renderBoard();
 });
 
 shuffleBtn.addEventListener("click", shuffleSeats);
