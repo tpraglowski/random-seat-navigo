@@ -152,11 +152,21 @@ function renderBoard() {
     clusterEl.style.left = `${cluster.x}%`;
     clusterEl.style.top = `${cluster.y}%`;
 
-    rolesOf(cluster).forEach((role) => {
+    const roles = rolesOf(cluster);
+    const fanStep = 40; // degrees between adjacent petals
+    const mid = (roles.length - 1) / 2;
+    // Draw the petals furthest from center first so the middle one paints on
+    // top and its label is never covered by its neighbors.
+    const drawOrder = roles.map((role, i) => i).sort((a, b) => Math.abs(b - mid) - Math.abs(a - mid));
+
+    drawOrder.forEach((i) => {
+      const role = roles[i];
       const deskId = `${cluster.id}-${role}`;
       const desk = document.createElement("div");
       desk.className = "desk";
       desk.dataset.key = deskId;
+      const angle = (i - mid) * fanStep;
+      desk.style.setProperty("--angle", `${angle}deg`);
 
       let label;
       if (cls.blocked.includes(deskId)) {

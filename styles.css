@@ -254,22 +254,26 @@ textarea {
 
 .cluster {
   position: absolute;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: stretch;
-  height: 68px;
+  width: 0;
+  height: 0;
 }
 
-/* Every desk is the exact same isosceles trapezoid (short top, long bottom),
-   placed edge to edge — that shape alone makes neighbors touch at the bottom
-   corner while leaving a small wedge open at the top, same as the reference. */
+/* Every desk is the exact same isosceles trapezoid (short top, long bottom).
+   All desks in a cluster share one pivot point at their top-center and are
+   rotated around it by different angles, fanning out like flower petals so
+   each one's slanted side sits flush against its neighbor's slanted side. */
 .desk {
   --seat-fill: color-mix(in srgb, var(--accent) 45%, white);
-  position: relative;
+  --angle: 0deg;
+  position: absolute;
+  top: 0;
+  left: -37px;
   width: 74px;
   height: 68px;
   cursor: pointer;
   user-select: none;
+  transform: rotate(var(--angle));
+  transform-origin: 50% -30px;
 }
 
 .desk-shape {
@@ -303,9 +307,10 @@ textarea {
   overflow: hidden;
   color: var(--ink);
   transition: color 0.15s ease;
+  transform: rotate(calc(-1 * var(--angle)));
 }
 
-.desk:hover { transform: translateY(-2px); }
+.desk:hover { transform: rotate(var(--angle)) scale(1.06); }
 
 .desk.empty .desk-label {
   font-weight: 600;
