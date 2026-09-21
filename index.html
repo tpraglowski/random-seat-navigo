@@ -13,6 +13,7 @@
       <span class="brand-mark">🎲</span>
       <span class="brand-name">Random Seat <em>Navigo</em></span>
     </div>
+    <span class="sync-status" id="syncStatus">Łączenie…</span>
   </header>
 
   <main class="layout">
@@ -20,17 +21,10 @@
       <h2>Klasa</h2>
       <div class="class-row">
         <select id="classSelect"></select>
-        <button id="addClassBtn" class="icon-btn" title="Dodaj klasę">➕</button>
-        <button id="renameClassBtn" class="icon-btn" title="Zmień nazwę klasy">✎</button>
-        <button id="deleteClassBtn" class="icon-btn" title="Usuń klasę">🗑</button>
+        <button id="addClassBtn" class="icon-btn" title="Nowa klasa">➕</button>
+        <button id="editClassBtn" class="icon-btn" title="Edytuj klasę">✎</button>
       </div>
-
-      <h2>Uczniowie</h2>
-      <p class="hint">Edytuj listę uczniów wybranej klasy — jedno imię i nazwisko w każdej linii.</p>
-      <textarea id="namesInput" rows="12" placeholder="Jan Kowalski&#10;Anna Nowak&#10;..."></textarea>
-      <div class="count-row">
-        <span id="nameCount">0 uczniów</span>
-      </div>
+      <p class="hint" id="classSummary">0 uczniów</p>
 
       <h2>Sala</h2>
       <div class="grid-controls">
@@ -60,9 +54,45 @@
   </main>
 
   <footer class="foot">
-    <span>Dane zapisują się tylko lokalnie w Twojej przeglądarce.</span>
+    <span>Dane zapisują się w chmurze (Firebase) i są widoczne na każdym urządzeniu.</span>
   </footer>
 
-  <script src="script.js"></script>
+  <div class="modal-overlay hidden" id="editModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Edytuj klasę">
+      <div class="modal-head">
+        <h2>Edytuj klasę</h2>
+        <button id="closeEditBtn" class="icon-btn" title="Zamknij">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="field-label" for="classNameInput">Nazwa klasy</label>
+        <div class="class-row">
+          <input type="text" id="classNameInput" />
+          <button id="deleteClassBtn" class="icon-btn" title="Usuń klasę">🗑</button>
+        </div>
+
+        <h3>Uczniowie</h3>
+        <p class="hint">Jedno imię i nazwisko w każdej linii.</p>
+        <textarea id="namesInput" rows="10" placeholder="Jan Kowalski&#10;Anna Nowak&#10;..."></textarea>
+        <div class="count-row">
+          <span id="nameCount">0 uczniów</span>
+        </div>
+
+        <h3>Kryteria rozsadzenia</h3>
+        <p class="hint">Wskaż osoby, które nie powinny siedzieć obok siebie — losowanie będzie tego unikać.</p>
+        <div class="constraint-row">
+          <select id="constraintA"></select>
+          <span class="constraint-vs">nie obok</span>
+          <select id="constraintB"></select>
+          <button id="addConstraintBtn" class="icon-btn" title="Dodaj regułę">➕</button>
+        </div>
+        <ul class="constraint-list" id="constraintList"></ul>
+      </div>
+      <div class="modal-foot">
+        <button id="saveEditBtn" class="primary-btn">Zamknij</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="script.js"></script>
 </body>
 </html>

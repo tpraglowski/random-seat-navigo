@@ -1,4 +1,18 @@
-const STORAGE_KEY = "random-seat-navigo-state";
+import { firebaseConfig } from './firebase-config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js';
+
+// All classes for this tool live in ONE Firestore document (store/randomSeatNavigoClasses),
+// same "one doc per feature" pattern the MySchool app uses for subjectsByClass etc.
+// Which class is selected on THIS device is a local-only preference (not synced).
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+const classesDocRef = doc(db, 'store', 'randomSeatNavigoClasses');
+
+const CACHE_KEY = 'random-seat-navigo-cache';
+const CURRENT_CLASS_KEY = 'random-seat-navigo-current-class';
 
 const namesInput = document.getElementById("namesInput");
 const nameCount = document.getElementById("nameCount");
@@ -8,56 +22,56 @@ const board = document.getElementById("board");
 const shuffleBtn = document.getElementById("shuffleBtn");
 const resetBtn = document.getElementById("resetBtn");
 const classSelect = document.getElementById("classSelect");
+const classSummary = document.getElementById("classSummary");
 const addClassBtn = document.getElementById("addClassBtn");
-const renameClassBtn = document.getElementById("renameClassBtn");
+const editClassBtn = document.getElementById("editClassBtn");
 const deleteClassBtn = document.getElementById("deleteClassBtn");
+const classNameInput = document.getElementById("classNameInput");
+const editModal = document.getElementById("editModal");
+const closeEditBtn = document.getElementById("closeEditBtn");
+const saveEditBtn = document.getElementById("saveEditBtn");
+const constraintA = document.getElementById("constraintA");
+const constraintB = document.getElementById("constraintB");
+const addConstraintBtn = document.getElementById("addConstraintBtn");
+const constraintList = document.getElementById("constraintList");
+const syncStatus = document.getElementById("syncStatus");
 
 function makeClass() {
-  return { names: "", rows: 4, cols: 6, blocked: [], assignment: {} };
+  return { names: "", rows: 4, cols: 6, blocked: [], assignment: {}, constraints: [] };
 }
 
-function defaultState() {
-  return {
-    classes: {
-      "Klasa 6a": makeClass(),
-      "Klasa 7a": makeClass(),
-    },
-    currentClass: "Klasa 6a",
-  };
+function defaultClasses() {
+  return { "Klasa 6a": makeClass(), "Klasa 7a": makeClass() };
 }
 
-let state = loadState() || defaultState();
-
-function loadState() {
+function loadCache() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed.classes || !Object.keys(parsed.classes).length) return null;
-    if (!parsed.classes[parsed.currentClass]) {
-      parsed.currentClass = Object.keys(parsed.classes)[0];
-    }
-    return parsed;
+    return JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
   } catch {
     return null;
   }
 }
 
-function saveState() {
+function cacheClasses() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(CACHE_KEY, JSON.stringify(state.classes));
   } catch {
     // ignore storage failures (e.g. private browsing)
   }
 }
 
+let state = { classes: loadCache() };
+let currentClassName = localStorage.getItem(CURRENT_CLASS_KEY) || null;
+let firstLoadDone = false;
+let saveTimer = null;
+
 function currentClass() {
-  return state.classes[state.currentClass];
+  return state.classes[currentClassName];
 }
 
-function getNames() {
-  return currentClass()
-    .names.split("\n")
+function getNames(text) {
+  return (text ?? currentClass().names)
+    .split("\n")
     .map((n) => n.trim())
     .filter(Boolean);
 }
@@ -66,36 +80,50 @@ function seatKey(r, c) {
   return `${r}-${c}`;
 }
 
-function renderClassSelect() {
-  classSelect.innerHTML = Object.keys(state.classes)
-    .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
-    .join("");
-  classSelect.value = state.currentClass;
-}
-
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
   return div.innerHTML;
 }
 
-function renderClassFields() {
-  const cls = currentClass();
-  namesInput.value = cls.names;
-  rowsInput.value = cls.rows;
-  colsInput.value = cls.cols;
-  updateCount();
+function saveClasses(immediate = false) {
+  cacheClasses();
+  if (saveTimer) clearTimeout(saveTimer);
+  const write = () => setDoc(classesDocRef, { value: state.classes }).catch((e) => console.error(e));
+  if (immediate) write();
+  else saveTimer = setTimeout(write, 400);
+}
+
+function setCurrentClass(name) {
+  currentClassName = name;
+  try {
+    localStorage.setItem(CURRENT_CLASS_KEY, name);
+  } catch {
+    // ignore
+  }
+}
+
+// ---------- Rendering ----------
+
+function renderClassSelect() {
+  classSelect.innerHTML = Object.keys(state.classes)
+    .map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+    .join("");
+  classSelect.value = currentClassName;
+}
+
+function renderClassSummary() {
+  const count = getNames().length;
+  classSummary.textContent = `${count} ${count === 1 ? "uczeń" : "uczniów"}`;
 }
 
 function renderBoard() {
   const cls = currentClass();
-  const rows = cls.rows;
-  const cols = cls.cols;
-  board.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  board.style.gridTemplateColumns = `repeat(${cls.cols}, 1fr)`;
   board.innerHTML = "";
 
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
+  for (let r = 0; r < cls.rows; r++) {
+    for (let c = 0; c < cls.cols; c++) {
       const key = seatKey(r, c);
       const seat = document.createElement("div");
       seat.className = "seat";
@@ -118,6 +146,145 @@ function renderBoard() {
   }
 }
 
+function renderRoomFields() {
+  const cls = currentClass();
+  rowsInput.value = cls.rows;
+  colsInput.value = cls.cols;
+}
+
+function renderConstraintOptions() {
+  const names = getNames(namesInput.value);
+  const options = names.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
+  constraintA.innerHTML = options;
+  constraintB.innerHTML = options;
+}
+
+function renderConstraintList() {
+  const cls = currentClass();
+  if (!cls.constraints.length) {
+    constraintList.innerHTML = `<li class="constraint-empty" style="list-style:none">Brak reguł.</li>`;
+    return;
+  }
+  constraintList.innerHTML = cls.constraints
+    .map(
+      (pair, i) => `<li><span>${escapeHtml(pair.a)} ↔ ${escapeHtml(pair.b)}</span><button data-idx="${i}" title="Usuń regułę">✕</button></li>`
+    )
+    .join("");
+  constraintList.querySelectorAll("button[data-idx]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      cls.constraints.splice(Number(btn.dataset.idx), 1);
+      saveClasses(true);
+      renderConstraintList();
+    });
+  });
+}
+
+function renderMain() {
+  renderClassSelect();
+  renderClassSummary();
+  renderRoomFields();
+  renderBoard();
+}
+
+function renderModalContents() {
+  const cls = currentClass();
+  classNameInput.value = currentClassName;
+  namesInput.value = cls.names;
+  nameCount.textContent = `${getNames(cls.names).length} ${getNames(cls.names).length === 1 ? "uczeń" : "uczniów"}`;
+  renderConstraintOptions();
+  renderConstraintList();
+}
+
+// ---------- Seat shuffling with "don't sit together" constraints ----------
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function neighborsOf(key, rows, cols) {
+  const [r, c] = key.split("-").map(Number);
+  return [
+    [r - 1, c],
+    [r + 1, c],
+    [r, c - 1],
+    [r, c + 1],
+  ]
+    .filter(([rr, cc]) => rr >= 0 && rr < rows && cc >= 0 && cc < cols)
+    .map(([rr, cc]) => seatKey(rr, cc));
+}
+
+function countViolations(assignment, constraints, rows, cols) {
+  const seatOf = {};
+  for (const [seat, name] of Object.entries(assignment)) seatOf[name] = seat;
+  let violations = 0;
+  for (const { a, b } of constraints) {
+    const seatA = seatOf[a];
+    const seatB = seatOf[b];
+    if (!seatA || !seatB) continue;
+    if (neighborsOf(seatA, rows, cols).includes(seatB)) violations++;
+  }
+  return violations;
+}
+
+function shuffleSeats() {
+  const cls = currentClass();
+  const names = getNames(cls.names);
+  const availableSeats = [];
+  for (let r = 0; r < cls.rows; r++) {
+    for (let c = 0; c < cls.cols; c++) {
+      const key = seatKey(r, c);
+      if (!cls.blocked.includes(key)) availableSeats.push(key);
+    }
+  }
+
+  if (!names.length || !availableSeats.length) {
+    cls.assignment = {};
+    saveClasses(true);
+    renderBoard();
+    return;
+  }
+
+  const attempts = 300;
+  let best = null;
+  let bestViolations = Infinity;
+
+  for (let i = 0; i < attempts && bestViolations > 0; i++) {
+    const shuffledNames = shuffleArray(names);
+    const shuffledSeats = shuffleArray(availableSeats);
+    const assignment = {};
+    shuffledNames.slice(0, shuffledSeats.length).forEach((name, idx) => {
+      assignment[shuffledSeats[idx]] = name;
+    });
+    const violations = countViolations(assignment, cls.constraints, cls.rows, cls.cols);
+    if (violations < bestViolations) {
+      bestViolations = violations;
+      best = assignment;
+    }
+  }
+
+  cls.assignment = best;
+  saveClasses(true);
+  renderBoard();
+
+  const messages = [];
+  if (names.length > availableSeats.length) {
+    messages.push(
+      `${names.length - availableSeats.length} uczniów zostało bez miejsca (za mało dostępnych miejsc).`
+    );
+  }
+  if (bestViolations > 0) {
+    messages.push(
+      `Nie udało się spełnić ${bestViolations} ${bestViolations === 1 ? "reguły" : "reguł"} rozsadzenia przy tym układzie sali. Spróbuj wylosować ponownie albo zwiększ salę.`
+    );
+  }
+  if (messages.length) alert(messages.join("\n"));
+}
+
 function toggleBlocked(key) {
   const cls = currentClass();
   const idx = cls.blocked.indexOf(key);
@@ -127,66 +294,41 @@ function toggleBlocked(key) {
     delete cls.assignment[key];
     cls.blocked.push(key);
   }
-  saveState();
+  saveClasses(true);
   renderBoard();
 }
 
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
+// ---------- Modal ----------
+
+function openEditModal() {
+  renderModalContents();
+  editModal.classList.remove("hidden");
 }
 
-function shuffleSeats() {
-  const cls = currentClass();
-  const names = getNames();
-  const availableSeats = [];
-  for (let r = 0; r < cls.rows; r++) {
-    for (let c = 0; c < cls.cols; c++) {
-      const key = seatKey(r, c);
-      if (!cls.blocked.includes(key)) availableSeats.push(key);
-    }
-  }
-
-  const shuffledNames = shuffle(names);
-  const shuffledSeats = shuffle(availableSeats);
-
-  cls.assignment = {};
-  shuffledNames.slice(0, shuffledSeats.length).forEach((name, i) => {
-    cls.assignment[shuffledSeats[i]] = name;
-  });
-
-  saveState();
-  renderBoard();
-
-  if (names.length > availableSeats.length) {
-    alert(
-      `Uwaga: ${names.length} uczniów, ale tylko ${availableSeats.length} dostępnych miejsc. ${
-        names.length - availableSeats.length
-      } uczniów zostało bez miejsca.`
-    );
-  }
+function closeEditModal() {
+  editModal.classList.add("hidden");
+  renderMain();
 }
 
-function updateCount() {
-  const count = getNames().length;
-  nameCount.textContent = `${count} ${count === 1 ? "uczeń" : "uczniów"}`;
+function isModalOpen() {
+  return !editModal.classList.contains("hidden");
 }
+
+// ---------- Events ----------
 
 namesInput.addEventListener("input", () => {
   currentClass().names = namesInput.value;
-  saveState();
-  updateCount();
+  saveClasses();
+  const count = getNames(namesInput.value).length;
+  nameCount.textContent = `${count} ${count === 1 ? "uczeń" : "uczniów"}`;
+  renderConstraintOptions();
 });
 
 rowsInput.addEventListener("change", () => {
   const cls = currentClass();
   cls.rows = Math.max(1, Math.min(12, parseInt(rowsInput.value, 10) || 1));
   rowsInput.value = cls.rows;
-  saveState();
+  saveClasses(true);
   renderBoard();
 });
 
@@ -194,7 +336,7 @@ colsInput.addEventListener("change", () => {
   const cls = currentClass();
   cls.cols = Math.max(1, Math.min(10, parseInt(colsInput.value, 10) || 1));
   colsInput.value = cls.cols;
-  saveState();
+  saveClasses(true);
   renderBoard();
 });
 
@@ -205,15 +347,13 @@ resetBtn.addEventListener("click", () => {
   const cls = currentClass();
   cls.blocked = [];
   cls.assignment = {};
-  saveState();
+  saveClasses(true);
   renderBoard();
 });
 
 classSelect.addEventListener("change", () => {
-  state.currentClass = classSelect.value;
-  saveState();
-  renderClassFields();
-  renderBoard();
+  setCurrentClass(classSelect.value);
+  renderMain();
 });
 
 addClassBtn.addEventListener("click", () => {
@@ -226,21 +366,29 @@ addClassBtn.addEventListener("click", () => {
     return;
   }
   state.classes[trimmed] = makeClass();
-  state.currentClass = trimmed;
-  saveState();
-  renderClassSelect();
-  renderClassFields();
-  renderBoard();
+  setCurrentClass(trimmed);
+  saveClasses(true);
+  renderMain();
+  openEditModal();
 });
 
-renameClassBtn.addEventListener("click", () => {
-  const oldName = state.currentClass;
-  const name = prompt("Nowa nazwa klasy:", oldName);
-  if (!name) return;
-  const trimmed = name.trim();
-  if (!trimmed || trimmed === oldName) return;
+editClassBtn.addEventListener("click", openEditModal);
+closeEditBtn.addEventListener("click", closeEditModal);
+saveEditBtn.addEventListener("click", closeEditModal);
+editModal.addEventListener("click", (e) => {
+  if (e.target === editModal) closeEditModal();
+});
+
+classNameInput.addEventListener("change", () => {
+  const oldName = currentClassName;
+  const trimmed = classNameInput.value.trim();
+  if (!trimmed || trimmed === oldName) {
+    classNameInput.value = oldName;
+    return;
+  }
   if (state.classes[trimmed]) {
     alert("Klasa o tej nazwie już istnieje.");
+    classNameInput.value = oldName;
     return;
   }
   const ordered = {};
@@ -248,9 +396,8 @@ renameClassBtn.addEventListener("click", () => {
     ordered[key === oldName ? trimmed : key] = value;
   }
   state.classes = ordered;
-  state.currentClass = trimmed;
-  saveState();
-  renderClassSelect();
+  setCurrentClass(trimmed);
+  saveClasses(true);
 });
 
 deleteClassBtn.addEventListener("click", () => {
@@ -259,15 +406,82 @@ deleteClassBtn.addEventListener("click", () => {
     alert("Nie można usunąć jedynej klasy.");
     return;
   }
-  if (!confirm(`Usunąć klasę "${state.currentClass}" wraz z jej planem?`)) return;
-  delete state.classes[state.currentClass];
-  state.currentClass = Object.keys(state.classes)[0];
-  saveState();
-  renderClassSelect();
-  renderClassFields();
-  renderBoard();
+  if (!confirm(`Usunąć klasę "${currentClassName}" wraz z jej planem?`)) return;
+  delete state.classes[currentClassName];
+  setCurrentClass(Object.keys(state.classes)[0]);
+  saveClasses(true);
+  closeEditModal();
 });
 
-renderClassSelect();
-renderClassFields();
-renderBoard();
+addConstraintBtn.addEventListener("click", () => {
+  const a = constraintA.value;
+  const b = constraintB.value;
+  if (!a || !b || a === b) return;
+  const cls = currentClass();
+  const exists = cls.constraints.some(
+    (p) => (p.a === a && p.b === b) || (p.a === b && p.b === a)
+  );
+  if (exists) return;
+  cls.constraints.push({ a, b });
+  saveClasses(true);
+  renderConstraintList();
+});
+
+// ---------- Firebase init & live sync ----------
+
+function applyRemoteClasses(classes) {
+  state.classes = classes && Object.keys(classes).length ? classes : defaultClasses();
+  if (!currentClassName || !state.classes[currentClassName]) {
+    currentClassName = Object.keys(state.classes)[0];
+  }
+  cacheClasses();
+}
+
+async function init() {
+  if (state.classes) {
+    if (!currentClassName || !state.classes[currentClassName]) {
+      currentClassName = Object.keys(state.classes)[0];
+    }
+    renderMain();
+  }
+
+  try {
+    await signInAnonymously(auth);
+  } catch (e) {
+    console.error(e);
+    syncStatus.textContent = state.classes ? "Tryb offline" : "Błąd połączenia";
+    return;
+  }
+
+  onSnapshot(
+    classesDocRef,
+    async (snap) => {
+      if (!firstLoadDone) {
+        if (snap.exists()) {
+          applyRemoteClasses(snap.data().value);
+        } else {
+          applyRemoteClasses(null);
+          await setDoc(classesDocRef, { value: state.classes });
+        }
+        firstLoadDone = true;
+        renderMain();
+        syncStatus.textContent = "";
+      } else if (!isModalOpen()) {
+        applyRemoteClasses(snap.exists() ? snap.data().value : null);
+        renderMain();
+      }
+    },
+    (err) => {
+      console.error(err);
+      if (state.classes) {
+        firstLoadDone = true;
+        renderMain();
+        syncStatus.textContent = "Tryb offline";
+      } else {
+        syncStatus.textContent = "Błąd połączenia";
+      }
+    }
+  );
+}
+
+init();
