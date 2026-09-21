@@ -260,8 +260,9 @@ textarea {
   height: 68px;
 }
 
-/* Every desk is the exact same parallelogram, just mirrored on every other
-   tile so the slanted edges line up flush against each other with no gap. */
+/* Every desk is the exact same isosceles trapezoid (short top, long bottom),
+   placed edge to edge — that shape alone makes neighbors touch at the bottom
+   corner while leaving a small wedge open at the top, same as the reference. */
 .desk {
   --seat-fill: color-mix(in srgb, var(--accent) 45%, white);
   position: relative;
@@ -270,8 +271,6 @@ textarea {
   cursor: pointer;
   user-select: none;
 }
-
-.desk:nth-child(even) { transform: scaleX(-1); }
 
 .desk-shape {
   position: absolute;
@@ -306,10 +305,7 @@ textarea {
   transition: color 0.15s ease;
 }
 
-.desk:nth-child(even) .desk-label { transform: scaleX(-1); }
-
 .desk:hover { transform: translateY(-2px); }
-.desk:nth-child(even):hover { transform: scaleX(-1) translateY(-2px); }
 
 .desk.empty .desk-label {
   font-weight: 600;

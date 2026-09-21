@@ -172,7 +172,7 @@ function renderBoard() {
 
       desk.innerHTML = `
         <svg class="desk-shape" viewBox="0 0 74 68" preserveAspectRatio="none">
-          <polygon points="16,0 74,0 58,68 0,68" />
+          <polygon points="18,0 56,0 74,68 0,68" />
         </svg>
         <span class="desk-label">${escapeHtml(label)}</span>
       `;
