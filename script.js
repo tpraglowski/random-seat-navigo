@@ -155,20 +155,27 @@ function renderBoard() {
     rolesOf(cluster).forEach((role) => {
       const deskId = `${cluster.id}-${role}`;
       const desk = document.createElement("div");
-      desk.className = `desk role-${role}`;
+      desk.className = "desk";
       desk.dataset.key = deskId;
 
+      let label;
       if (cls.blocked.includes(deskId)) {
         desk.classList.add("blocked");
-        desk.textContent = "—";
+        label = "—";
       } else if (cls.assignment[deskId]) {
         desk.classList.add("filled");
-        desk.textContent = cls.assignment[deskId];
+        label = cls.assignment[deskId];
       } else {
         desk.classList.add("empty");
-        desk.textContent = "puste";
+        label = "puste";
       }
 
+      desk.innerHTML = `
+        <svg class="desk-shape" viewBox="0 0 74 68" preserveAspectRatio="none">
+          <polygon points="16,0 74,0 58,68 0,68" />
+        </svg>
+        <span class="desk-label">${escapeHtml(label)}</span>
+      `;
       desk.addEventListener("click", () => toggleBlocked(deskId));
       clusterEl.appendChild(desk);
     });

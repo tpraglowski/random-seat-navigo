@@ -260,10 +260,39 @@ textarea {
   height: 68px;
 }
 
+/* Every desk is the exact same parallelogram, just mirrored on every other
+   tile so the slanted edges line up flush against each other with no gap. */
 .desk {
   --seat-fill: color-mix(in srgb, var(--accent) 45%, white);
-  background: var(--seat-fill);
-  border: none;
+  position: relative;
+  width: 74px;
+  height: 68px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.desk:nth-child(even) { transform: scaleX(-1); }
+
+.desk-shape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.desk-shape polygon {
+  fill: var(--seat-fill);
+  stroke: var(--seat-fill);
+  stroke-width: 12;
+  stroke-linejoin: round;
+  transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.desk-label {
+  position: relative;
+  z-index: 1;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -271,49 +300,32 @@ textarea {
   font-size: 0.68rem;
   font-weight: 700;
   line-height: 1.15;
-  padding: 4px 6px;
+  padding: 4px 10px;
   overflow: hidden;
-  cursor: pointer;
-  user-select: none;
   color: var(--ink);
-  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  transition: color 0.15s ease;
 }
+
+.desk:nth-child(even) .desk-label { transform: scaleX(-1); }
 
 .desk:hover { transform: translateY(-2px); }
+.desk:nth-child(even):hover { transform: scaleX(-1) translateY(-2px); }
 
-.desk.role-left {
-  width: 72px;
-  margin-right: 6px;
-  clip-path: polygon(0 32%, 100% 0, 100% 100%, 0 68%);
-}
-
-.desk.role-right {
-  width: 72px;
-  margin-left: 6px;
-  clip-path: polygon(100% 32%, 0 0, 0 100%, 100% 68%);
-}
-
-.desk.role-center {
-  width: 86px;
-  clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%);
-}
-
-.desk.empty {
+.desk.empty .desk-label {
   font-weight: 600;
   font-size: 0.65rem;
 }
 
 .desk.filled {
   --seat-fill: var(--accent);
-  color: #ffffff;
 }
+.desk.filled .desk-label { color: #ffffff; }
 
 .desk.blocked {
   --seat-fill: var(--seat-blocked);
-  color: var(--muted);
   cursor: not-allowed;
-  background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.06) 5px, rgba(0, 0, 0, 0.06) 6px);
 }
+.desk.blocked .desk-label { color: var(--muted); }
 
 .desk.filled {
   --seat-fill: color-mix(in srgb, var(--accent) 20%, var(--seat-bg));
