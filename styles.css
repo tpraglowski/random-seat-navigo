@@ -249,7 +249,7 @@ textarea {
   position: relative;
   width: 900px;
   height: 560px;
-  max-width: 100%;
+  flex-shrink: 0;
 }
 
 .cluster {
@@ -261,10 +261,9 @@ textarea {
 }
 
 .desk {
-  --seat-fill: var(--seat-bg);
-  --seat-edge: var(--seat-border);
+  --seat-fill: color-mix(in srgb, var(--accent) 45%, white);
   background: var(--seat-fill);
-  border: 1px solid var(--seat-edge);
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -276,20 +275,21 @@ textarea {
   overflow: hidden;
   cursor: pointer;
   user-select: none;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  color: var(--ink);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
 
 .desk:hover { transform: translateY(-2px); }
 
 .desk.role-left {
   width: 72px;
-  margin-right: 4px;
+  margin-right: 6px;
   clip-path: polygon(0 32%, 100% 0, 100% 100%, 0 68%);
 }
 
 .desk.role-right {
   width: 72px;
-  margin-left: 4px;
+  margin-left: 6px;
   clip-path: polygon(100% 32%, 0 0, 0 100%, 100% 68%);
 }
 
@@ -299,16 +299,20 @@ textarea {
 }
 
 .desk.empty {
-  color: var(--muted);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.65rem;
+}
+
+.desk.filled {
+  --seat-fill: var(--accent);
+  color: #ffffff;
 }
 
 .desk.blocked {
   --seat-fill: var(--seat-blocked);
-  --seat-edge: var(--seat-blocked-border);
   color: var(--muted);
   cursor: not-allowed;
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0, 0, 0, 0.06) 5px, rgba(0, 0, 0, 0.06) 6px);
 }
 
 .desk.filled {
