@@ -57,7 +57,8 @@ body {
   min-width: 0;
 }
 
-.brand-mark { font-size: 1.4rem; flex-shrink: 0; }
+.brand-mark { flex-shrink: 0; display: flex; }
+.brand-mark .icon { width: 26px; height: 26px; }
 .brand-name { line-height: 1.25; }
 .brand-name em { display: block; font-style: normal; opacity: 0.85; }
 
@@ -194,6 +195,10 @@ textarea {
 }
 
 .primary-btn, .ghost-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border-radius: 10px;
   padding: 10px 16px;
   font-size: 0.95rem;
@@ -408,9 +413,28 @@ textarea {
   color: var(--ink);
   font-size: 0.95rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .icon-btn:hover { background: var(--seat-bg); }
+
+/* Monochrome inline-SVG icons — always the current text color, never the
+   multicolor system emoji glyphs. */
+.icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -3px;
+}
+
+.icon-dot { fill: currentColor; stroke: none; }
 
 .sync-status {
   font-size: 0.8rem;
@@ -543,7 +567,11 @@ textarea {
   cursor: pointer;
   font-size: 0.9rem;
   line-height: 1;
+  display: flex;
+  align-items: center;
 }
+
+.constraint-list .icon { width: 15px; height: 15px; }
 
 .constraint-list button:hover { color: var(--ink); }
 
