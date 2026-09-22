@@ -159,8 +159,11 @@ function renderBoard() {
     const fanStep = 29.67;
     const mid = (roles.length - 1) / 2;
     // How far (px, real screen space) a neighbor slides away so the hovered
-    // desk's 1.22x scale-up never covers it.
+    // desk's 1.22x scale-up never covers it, on top of the permanent gap below.
     const PUSH = 24;
+    // Permanent small gap (px) between resting desks — the rounded corners'
+    // stroke still bleeds a little at the touching seam even with exact angles.
+    const REST_GAP = 10;
 
     const deskEls = [];
 
@@ -171,6 +174,10 @@ function renderBoard() {
       desk.dataset.key = deskId;
       const angle = (i - mid) * fanStep;
       desk.style.setProperty("--angle", `${angle}deg`);
+      // Positive fan angle renders further to screen-left, so a desk before
+      // mid needs a positive (rightward) rest shift to move away from center.
+      const restShift = i < mid ? REST_GAP : i > mid ? -REST_GAP : 0;
+      desk.style.setProperty("--rest-shift", `${restShift}px`);
 
       let label;
       if (cls.blocked.includes(deskId)) {
@@ -211,12 +218,12 @@ function renderBoard() {
           // Positive fan angle renders further to screen-left (see fanStep/angle
           // above), so a neighbor with a smaller index needs to move further
           // screen-right (positive shift), not left, to move away from i.
-          other.style.setProperty("--shift", `${j < i ? PUSH : -PUSH}px`);
+          other.style.setProperty("--hover-shift", `${j < i ? PUSH : -PUSH}px`);
         });
       });
       desk.addEventListener("mouseleave", () => {
         desk.classList.remove("active");
-        deskEls.forEach((other) => other.style.setProperty("--shift", "0px"));
+        deskEls.forEach((other) => other.style.setProperty("--hover-shift", "0px"));
       });
     });
 

@@ -264,7 +264,8 @@ textarea {
    each one's slanted side sits flush against its neighbor's slanted side. */
 .desk {
   --angle: 0deg;
-  --shift: 0px;
+  --rest-shift: 0px;
+  --hover-shift: 0px;
   position: absolute;
   top: 0;
   left: -37px;
@@ -274,8 +275,11 @@ textarea {
   user-select: none;
   /* translateX runs in real screen space and is applied AFTER rotate (it's
      listed first), so hover pushes a desk straight sideways regardless of
-     its own fan angle — never by rotating it further. */
-  transform: translateX(var(--shift)) rotate(var(--angle));
+     its own fan angle — never by rotating it further. --rest-shift is a
+     small permanent gap away from the middle desk (the rounded corners'
+     stroke still bleeds a little at the touching seam); --hover-shift adds
+     extra separation only while a neighbor is being hovered/enlarged. */
+  transform: translateX(calc(var(--rest-shift) + var(--hover-shift))) rotate(var(--angle));
   transition: transform 0.5s ease;
   /* The pivot sits far above the shape, at the point where the trapezoid's two
      slanted sides would meet if extended — so rotating by the trapezoid's own
