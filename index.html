@@ -8,6 +8,12 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="mode-tabs" id="modeTabs">
+    <span class="mode-tab-pill" id="modeTabPill"></span>
+    <button class="mode-tab active" data-mode="seats" type="button">Losowanie miejsc</button>
+    <button class="mode-tab" data-mode="person" type="button">Losowanie osoby</button>
+  </div>
+
   <div class="app">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-head">
@@ -28,11 +34,6 @@
       </div>
 
       <div class="sidebar-body" id="sidebarBody">
-        <div class="mode-tabs" id="modeTabs">
-          <button class="mode-tab active" data-mode="seats" type="button">Losowanie miejsc</button>
-          <button class="mode-tab" data-mode="person" type="button">Losowanie osoby</button>
-        </div>
-
         <h2>Klasa</h2>
         <div class="class-row">
           <select id="classSelect"></select>

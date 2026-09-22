@@ -40,6 +40,7 @@ const syncStatus = document.getElementById("syncStatus");
 const sidebar = document.getElementById("sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
 const modeTabs = document.getElementById("modeTabs");
+const modeTabPill = document.getElementById("modeTabPill");
 const seatsOnlySection = document.getElementById("seatsOnlySection");
 const personOnlySection = document.getElementById("personOnlySection");
 const seatsView = document.getElementById("seatsView");
@@ -327,6 +328,13 @@ function renderMain() {
 
 // ---------- Mode switch: seating chart vs. picking one person ----------
 
+function moveModeTabPill() {
+  const activeBtn = modeTabs.querySelector(".mode-tab.active");
+  if (!activeBtn) return;
+  modeTabPill.style.width = `${activeBtn.offsetWidth}px`;
+  modeTabPill.style.transform = `translateX(${activeBtn.offsetLeft - 3}px)`;
+}
+
 function applyMode() {
   const isPerson = currentMode === "person";
   modeTabs.querySelectorAll(".mode-tab").forEach((btn) => {
@@ -337,7 +345,10 @@ function applyMode() {
   seatsView.classList.toggle("hidden", isPerson);
   personView.classList.toggle("hidden", !isPerson);
   losujLabel.textContent = isPerson ? "Losuj osobę" : "Losuj miejsca";
+  moveModeTabPill();
 }
+
+window.addEventListener("resize", moveModeTabPill);
 
 function setMode(mode) {
   currentMode = mode;
