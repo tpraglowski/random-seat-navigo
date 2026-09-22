@@ -58,8 +58,8 @@ body {
 }
 
 .brand-mark { font-size: 1.4rem; flex-shrink: 0; }
-.brand-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.brand-name em { font-style: normal; opacity: 0.85; }
+.brand-name { line-height: 1.25; }
+.brand-name em { display: block; font-style: normal; opacity: 0.85; }
 
 .toggle-btn {
   border-color: rgba(255, 255, 255, 0.4);
@@ -116,6 +116,12 @@ body {
 .sidebar.collapsed .brand-name,
 .sidebar.collapsed .losuj-label {
   display: none;
+}
+/* Icon + toggle button no longer fit side by side in the narrow rail —
+   stack them instead so they never overlap. */
+.sidebar.collapsed .sidebar-head {
+  flex-direction: column;
+  gap: 10px;
 }
 .sidebar.collapsed .toggle-btn { transform: scaleX(-1); }
 .sidebar.collapsed .losuj-btn { border-radius: 50%; width: 44px; height: 44px; padding: 0; margin: 0 auto; }
