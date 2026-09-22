@@ -1,4 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
+import { ACCESS_CODE } from './access-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js';
@@ -47,6 +48,45 @@ const seatsView = document.getElementById("seatsView");
 const personView = document.getElementById("personView");
 const personPickText = document.getElementById("personPickText");
 const losujLabel = document.getElementById("losujLabel");
+const appRoot = document.getElementById("appRoot");
+const accessGate = document.getElementById("accessGate");
+const accessForm = document.getElementById("accessForm");
+const accessCodeInput = document.getElementById("accessCode");
+const accessError = document.getElementById("accessError");
+
+const ACCESS_UNLOCKED_KEY = "random-seat-navigo-unlocked";
+
+function unlockApp() {
+  accessGate.classList.add("hidden");
+  appRoot.classList.remove("hidden");
+  modeTabs.classList.remove("hidden");
+  init();
+}
+
+accessForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (accessCodeInput.value === ACCESS_CODE) {
+    try {
+      localStorage.setItem(ACCESS_UNLOCKED_KEY, "1");
+    } catch {
+      // ignore
+    }
+    accessError.classList.add("hidden");
+    unlockApp();
+  } else {
+    accessError.classList.remove("hidden");
+    accessCodeInput.value = "";
+    accessCodeInput.focus();
+  }
+});
+
+let alreadyUnlocked = false;
+try {
+  alreadyUnlocked = localStorage.getItem(ACCESS_UNLOCKED_KEY) === "1";
+} catch {
+  // ignore
+}
+if (alreadyUnlocked) unlockApp();
 
 const SIDEBAR_COLLAPSED_KEY = "random-seat-navigo-sidebar-collapsed";
 const MODE_KEY = "random-seat-navigo-mode";
@@ -815,4 +855,5 @@ async function init() {
   );
 }
 
-init();
+// init() runs from unlockApp() once the access code is accepted (or right
+// away, on load, if this device already unlocked it before).

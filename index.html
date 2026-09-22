@@ -8,13 +8,34 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="mode-tabs" id="modeTabs">
+  <div class="access-gate" id="accessGate">
+    <form class="access-form" id="accessForm">
+      <div class="access-brand">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="4" />
+          <circle class="icon-dot" cx="8" cy="8" r="1.4" />
+          <circle class="icon-dot" cx="16" cy="8" r="1.4" />
+          <circle class="icon-dot" cx="12" cy="12" r="1.4" />
+          <circle class="icon-dot" cx="8" cy="16" r="1.4" />
+          <circle class="icon-dot" cx="16" cy="16" r="1.4" />
+        </svg>
+        <span>Random Seat <em>Navigo</em></span>
+      </div>
+      <p class="hint">Podaj kod dostępu, aby wejść na stronę.</p>
+      <input type="text" id="accessUser" name="username" value="random-seat-navigo" autocomplete="username" class="visually-hidden" tabindex="-1" aria-hidden="true" />
+      <input type="password" id="accessCode" name="password" autocomplete="current-password" placeholder="Kod dostępu" required />
+      <button type="submit" class="primary-btn full-btn">Wejdź</button>
+      <p class="hint access-error hidden" id="accessError">Błędny kod dostępu.</p>
+    </form>
+  </div>
+
+  <div class="mode-tabs hidden" id="modeTabs">
     <span class="mode-tab-pill" id="modeTabPill"></span>
     <button class="mode-tab active" data-mode="seats" type="button">Losowanie miejsc</button>
     <button class="mode-tab" data-mode="person" type="button">Losowanie osoby</button>
   </div>
 
-  <div class="app">
+  <div class="app hidden" id="appRoot">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-head">
         <div class="brand">
