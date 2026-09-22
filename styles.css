@@ -373,18 +373,19 @@ textarea {
 .desk.blocked .desk-label { color: var(--muted); }
 
 @keyframes desk-shuffle-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(30, 158, 74, 0.35)); }
+  50% { transform: scale(1.09); filter: drop-shadow(0 0 16px rgba(30, 158, 74, 0.65)); }
 }
 
 @keyframes desk-shuffle-land {
-  0% { transform: scale(1.2); }
-  60% { transform: scale(0.94); }
-  100% { transform: scale(1); }
+  0% { transform: scale(1.24); filter: drop-shadow(0 0 18px rgba(30, 158, 74, 0.7)); }
+  50% { transform: scale(0.93); filter: drop-shadow(0 0 4px rgba(30, 158, 74, 0.2)); }
+  75% { transform: scale(1.04); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(30, 158, 74, 0)); }
 }
 
-.desk.shuffling .desk-inner { animation: desk-shuffle-pulse 0.3s ease-in-out infinite; }
-.desk.landed .desk-inner { animation: desk-shuffle-land 0.26s ease-out; }
+.desk.shuffling .desk-inner { animation: desk-shuffle-pulse 0.5s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+.desk.landed .desk-inner { animation: desk-shuffle-land 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
 .losuj-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 

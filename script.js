@@ -421,45 +421,72 @@ function shuffleSeats() {
   });
 }
 
-// Slot-machine style reveal: each filled desk flickers through random names
-// before landing on its real one, staggered so the whole board settles
-// left-to-right-ish instead of all at once.
+// Slot-machine style reveal, table by table: every desk within one cluster
+// flickers through random names together, decelerating like a spinning reel
+// slowing to a stop, then lands with a soft bounce — table 1 settles, then
+// table 2, and so on, instead of a flat per-seat stagger.
+function flickerToFinal(label, pool, finalName, totalMs, onLanded) {
+  let elapsed = 0;
+  let delay = 45;
+  function tick() {
+    if (elapsed + delay >= totalMs) {
+      label.textContent = finalName;
+      onLanded();
+      return;
+    }
+    label.textContent = pool[Math.floor(Math.random() * pool.length)];
+    elapsed += delay;
+    delay *= 1.16; // ease out: each flip takes a little longer, like it's slowing down
+    setTimeout(tick, delay);
+  }
+  tick();
+}
+
 function animateShuffle(finalAssignment, onDone) {
   if (shuffleBtn.disabled) return;
   shuffleBtn.disabled = true;
 
   const deskEls = [...board.querySelectorAll(".desk")];
   const pool = Object.values(finalAssignment);
+
+  const TABLE_STAGGER = 260; // ms between one table starting and the next
+  const clusterOrderSeen = [];
+  const withinClusterIndex = {};
+  deskEls.forEach((desk) => {
+    const cid = clusterIdOf(desk.dataset.key);
+    if (!clusterOrderSeen.includes(cid)) clusterOrderSeen.push(cid);
+    withinClusterIndex[desk.dataset.key] = clusterOrderSeen.filter((c) => c === cid).length;
+  });
+
   let pending = 0;
 
-  deskEls.forEach((desk, idx) => {
+  deskEls.forEach((desk) => {
     const key = desk.dataset.key;
     const finalName = finalAssignment[key];
     if (!finalName || !pool.length) return;
 
-    const label = desk.querySelector(".desk-label");
-    const stagger = idx * 70;
-    const spinFor = 480 + Math.random() * 220;
+    const cid = clusterIdOf(key);
+    const tableStagger = clusterOrderSeen.indexOf(cid) * TABLE_STAGGER;
+    const seatWithinTable = deskIdsOfClusterId(cid).indexOf(key);
+    const stagger = tableStagger + seatWithinTable * 60;
+    const spinFor = 620 + Math.random() * 180;
     pending++;
+
+    const label = desk.querySelector(".desk-label");
 
     setTimeout(() => {
       desk.classList.remove("empty");
       desk.classList.add("filled", "shuffling");
-      const spin = setInterval(() => {
-        label.textContent = pool[Math.floor(Math.random() * pool.length)];
-      }, 55);
 
-      setTimeout(() => {
-        clearInterval(spin);
-        label.textContent = finalName;
+      flickerToFinal(label, pool, finalName, spinFor, () => {
         desk.classList.remove("shuffling");
         desk.classList.add("landed");
-        setTimeout(() => desk.classList.remove("landed"), 260);
+        setTimeout(() => desk.classList.remove("landed"), 420);
         if (--pending === 0) {
           shuffleBtn.disabled = false;
           onDone();
         }
-      }, spinFor);
+      });
     }, stagger);
   });
 
