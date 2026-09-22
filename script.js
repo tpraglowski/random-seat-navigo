@@ -63,9 +63,19 @@ function rolesOf(cluster) {
 }
 
 const ALL_DESK_IDS = DESK_LAYOUT.flatMap((cluster) => rolesOf(cluster).map((role) => `${cluster.id}-${role}`));
-// Human-friendly desk numbers (1..17), shown on empty desks and used in the
-// "stałe miejsce" (fixed seat) picker so people can say "desk 1", "desk 2"...
-const DESK_NUMBER = Object.fromEntries(ALL_DESK_IDS.map((id, i) => [id, i + 1]));
+
+// Human-friendly TABLE numbers (1..6) — one per cluster, not per individual
+// seat, matching how a teacher actually points at the room ("table 1 is the
+// one top-right"). Order follows the reading path: top-right, top-middle
+// (near the board), the small 2-desk one, middle, bottom-right, bottom-middle.
+const CLUSTER_ORDER = ["C", "B", "A", "D", "E", "F"];
+const CLUSTER_NUMBER = Object.fromEntries(CLUSTER_ORDER.map((id, i) => [id, i + 1]));
+function clusterIdOf(deskId) {
+  return deskId.split("-")[0];
+}
+function deskIdsOfClusterId(clusterId) {
+  return ALL_DESK_IDS.filter((id) => id.startsWith(`${clusterId}-`));
+}
 
 function neighborsOf(deskId) {
   const clusterId = deskId.split("-")[0];
@@ -199,7 +209,7 @@ function renderBoard() {
         label = cls.assignment[deskId];
       } else {
         desk.classList.add("empty");
-        label = String(DESK_NUMBER[deskId]);
+        label = String(CLUSTER_NUMBER[cluster.id]);
       }
 
       desk.innerHTML = `
@@ -251,8 +261,8 @@ function renderConstraintOptions() {
 }
 
 function renderFixedSeatDeskOptions() {
-  fixedSeatDesk.innerHTML = ALL_DESK_IDS.map(
-    (id) => `<option value="${id}">Stolik ${DESK_NUMBER[id]}</option>`
+  fixedSeatDesk.innerHTML = CLUSTER_ORDER.map(
+    (id) => `<option value="${id}">Stolik ${CLUSTER_NUMBER[id]}</option>`
   ).join("");
 }
 
@@ -265,7 +275,7 @@ function renderFixedSeatList() {
   fixedSeatList.innerHTML = cls.fixedSeats
     .map(
       (fs, i) =>
-        `<li><span>${escapeHtml(fs.name)} → stolik ${DESK_NUMBER[fs.deskId]}</span><button data-idx="${i}" title="Usuń"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button></li>`
+        `<li><span>${escapeHtml(fs.name)} → stolik ${CLUSTER_NUMBER[fs.clusterId]}</span><button data-idx="${i}" title="Usuń"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button></li>`
     )
     .join("");
   fixedSeatList.querySelectorAll("button[data-idx]").forEach((btn) => {
@@ -351,19 +361,27 @@ function shuffleSeats() {
     return;
   }
 
-  // Fixed seats only count when the person is still on the roster and their
-  // desk isn't blocked — everyone else (people + desks) gets shuffled freely.
-  const fixed = cls.fixedSeats.filter(
-    (fs) => names.includes(fs.name) && availableSeats.includes(fs.deskId)
-  );
+  // Fixed table assignments only count when the person is still on the roster
+  // and their table still has an unblocked seat free — everyone else (people
+  // and desks) gets shuffled freely. Each fixed person gets a random seat
+  // within their assigned table (re-rolled on every shuffle), so two people
+  // pinned to the same table still land in different individual spots.
   const fixedBase = {};
-  fixed.forEach((fs) => {
-    fixedBase[fs.deskId] = fs.name;
-  });
-  const fixedNames = new Set(fixed.map((fs) => fs.name));
-  const fixedSeatIds = new Set(fixed.map((fs) => fs.deskId));
+  const claimedSeats = new Set();
+  cls.fixedSeats
+    .filter((fs) => names.includes(fs.name))
+    .forEach((fs) => {
+      const openSeats = deskIdsOfClusterId(fs.clusterId).filter(
+        (id) => availableSeats.includes(id) && !claimedSeats.has(id)
+      );
+      if (!openSeats.length) return; // table full or blocked — falls back to free pool
+      const seat = openSeats[Math.floor(Math.random() * openSeats.length)];
+      claimedSeats.add(seat);
+      fixedBase[seat] = fs.name;
+    });
+  const fixedNames = new Set(Object.values(fixedBase));
   const freeNames = names.filter((n) => !fixedNames.has(n));
-  const freeSeats = availableSeats.filter((id) => !fixedSeatIds.has(id));
+  const freeSeats = availableSeats.filter((id) => !claimedSeats.has(id));
 
   const attempts = 300;
   let best = null;
@@ -585,13 +603,14 @@ addConstraintBtn.addEventListener("click", () => {
 
 addFixedSeatBtn.addEventListener("click", () => {
   const name = fixedSeatName.value;
-  const deskId = fixedSeatDesk.value;
-  if (!name || !deskId) return;
+  const clusterId = fixedSeatDesk.value;
+  if (!name || !clusterId) return;
   const cls = currentClass();
-  // A person has at most one fixed seat, and a desk holds at most one
-  // fixed person — adding a new pairing replaces whichever old one clashes.
-  cls.fixedSeats = cls.fixedSeats.filter((fs) => fs.name !== name && fs.deskId !== deskId);
-  cls.fixedSeats.push({ name, deskId });
+  // A person has at most one fixed table; a table can hold several fixed
+  // people (up to its own seat count) — adding a new pairing only replaces
+  // that person's own previous pairing, not other people already at that table.
+  cls.fixedSeats = cls.fixedSeats.filter((fs) => fs.name !== name);
+  cls.fixedSeats.push({ name, clusterId });
   saveClasses(true);
   renderFixedSeatList();
 });
@@ -613,9 +632,17 @@ if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1") {
 
 function applyRemoteClasses(classes) {
   state.classes = classes && Object.keys(classes).length ? classes : defaultClasses();
-  // Classes saved before "fixedSeats" existed won't have that field yet.
+  // Classes saved before "fixedSeats" existed won't have that field yet, and
+  // a short-lived earlier version stored a specific deskId instead of a table
+  // (clusterId) — migrate that shape forward rather than dropping it.
   for (const cls of Object.values(state.classes)) {
-    if (!cls.fixedSeats) cls.fixedSeats = [];
+    if (!cls.fixedSeats) {
+      cls.fixedSeats = [];
+    } else {
+      cls.fixedSeats = cls.fixedSeats.map((fs) =>
+        fs.clusterId ? fs : { name: fs.name, clusterId: clusterIdOf(fs.deskId) }
+      );
+    }
   }
   if (!currentClassName || !state.classes[currentClassName]) {
     currentClassName = Object.keys(state.classes)[0];
