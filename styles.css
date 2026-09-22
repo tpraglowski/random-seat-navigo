@@ -265,6 +265,7 @@ textarea {
 .desk {
   --seat-fill: color-mix(in srgb, var(--accent) 45%, white);
   --angle: 0deg;
+  --spread: 1;
   position: absolute;
   top: 0;
   left: -37px;
@@ -272,13 +273,20 @@ textarea {
   height: 68px;
   cursor: pointer;
   user-select: none;
-  transform: rotate(var(--angle));
+  transform: rotate(calc(var(--angle) * var(--spread)));
+  transition: transform 0.2s ease;
   /* The pivot sits far above the shape, at the point where the trapezoid's two
      slanted sides would meet if extended — so rotating by the trapezoid's own
      angular width (see fanStep in script.js) tiles copies with zero gap and
-     zero overlap, edges landing exactly on top of each other. */
+     zero overlap, edges landing exactly on top of each other. Hovering a
+     cluster bumps --spread above 1 so the side desks swing further apart. */
   transform-origin: 50% -71.78px;
 }
+
+/* .cluster has zero size (its desks are absolutely positioned around a shared
+   pivot), so plain :hover on it wouldn't reliably fire — script.js toggles
+   this class from the desks' own mouseenter/mouseleave instead. */
+.cluster.spread .desk { --spread: 1.6; }
 
 .desk-shape {
   position: absolute;
@@ -288,12 +296,19 @@ textarea {
   overflow: visible;
 }
 
-.desk-shape polygon {
+.desk-shape .fill {
   fill: var(--seat-fill);
   stroke: var(--seat-fill);
-  stroke-width: 12;
+  stroke-width: 8;
   stroke-linejoin: round;
   transition: fill 0.15s ease, stroke 0.15s ease;
+}
+
+.desk-shape .outline {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.18);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
 }
 
 .desk-label {
@@ -310,11 +325,11 @@ textarea {
   padding: 4px 10px;
   overflow: hidden;
   color: var(--ink);
-  transition: color 0.15s ease;
-  transform: rotate(calc(-1 * var(--angle)));
+  transition: color 0.15s ease, transform 0.2s ease;
+  transform: rotate(calc(-1 * var(--angle) * var(--spread)));
 }
 
-.desk:hover { transform: rotate(var(--angle)) scale(1.06); }
+.desk:hover .desk-shape .outline { stroke: rgba(0, 0, 0, 0.32); }
 
 .desk.empty .desk-label {
   font-weight: 600;

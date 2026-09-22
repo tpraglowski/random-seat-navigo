@@ -185,11 +185,14 @@ function renderBoard() {
 
       desk.innerHTML = `
         <svg class="desk-shape" viewBox="0 0 74 68" preserveAspectRatio="none">
-          <polygon points="18,0 56,0 74,68 0,68" />
+          <polygon class="fill" points="18,0 56,0 74,68 0,68" />
+          <polygon class="outline" points="18,0 56,0 74,68 0,68" />
         </svg>
         <span class="desk-label">${escapeHtml(label)}</span>
       `;
       desk.addEventListener("click", () => toggleBlocked(deskId));
+      desk.addEventListener("mouseenter", () => clusterEl.classList.add("spread"));
+      desk.addEventListener("mouseleave", () => clusterEl.classList.remove("spread"));
       clusterEl.appendChild(desk);
     });
 
