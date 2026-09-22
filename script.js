@@ -163,7 +163,11 @@ function renderBoard() {
     const PUSH = 24;
     // Permanent small gap (px) between resting desks — the rounded corners'
     // stroke still bleeds a little at the touching seam even with exact angles.
-    const REST_GAP = 10;
+    // A 3-desk cluster keeps its center fixed at 0, so each side moving by
+    // REST_GAP opens a REST_GAP-wide gap per pair. A 2-desk cluster has no
+    // fixed center — both desks move — so each only needs half as much to
+    // open the same-width gap between them.
+    const REST_GAP = roles.length === 2 ? 5 : 10;
 
     const deskEls = [];
 
