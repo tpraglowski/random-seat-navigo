@@ -113,6 +113,18 @@
           </button>
         </div>
         <ul class="constraint-list" id="constraintList"></ul>
+
+        <h3>Stałe miejsca</h3>
+        <p class="hint">Przypisz ucznia na sztywno do konkretnego stolika (numery widoczne na pustych stolikach na planie) — losowanie zawsze go tam posadzi.</p>
+        <div class="constraint-row">
+          <select id="fixedSeatName"></select>
+          <span class="constraint-vs">→ stolik</span>
+          <select id="fixedSeatDesk"></select>
+          <button id="addFixedSeatBtn" class="icon-btn" title="Przypisz do stolika">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+          </button>
+        </div>
+        <ul class="constraint-list" id="fixedSeatList"></ul>
       </div>
       <div class="modal-foot">
         <button id="saveEditBtn" class="primary-btn">Zamknij</button>

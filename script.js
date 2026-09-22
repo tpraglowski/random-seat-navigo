@@ -32,6 +32,10 @@ const constraintA = document.getElementById("constraintA");
 const constraintB = document.getElementById("constraintB");
 const addConstraintBtn = document.getElementById("addConstraintBtn");
 const constraintList = document.getElementById("constraintList");
+const fixedSeatName = document.getElementById("fixedSeatName");
+const fixedSeatDesk = document.getElementById("fixedSeatDesk");
+const addFixedSeatBtn = document.getElementById("addFixedSeatBtn");
+const fixedSeatList = document.getElementById("fixedSeatList");
 const syncStatus = document.getElementById("syncStatus");
 const sidebar = document.getElementById("sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
@@ -59,6 +63,9 @@ function rolesOf(cluster) {
 }
 
 const ALL_DESK_IDS = DESK_LAYOUT.flatMap((cluster) => rolesOf(cluster).map((role) => `${cluster.id}-${role}`));
+// Human-friendly desk numbers (1..17), shown on empty desks and used in the
+// "stałe miejsce" (fixed seat) picker so people can say "desk 1", "desk 2"...
+const DESK_NUMBER = Object.fromEntries(ALL_DESK_IDS.map((id, i) => [id, i + 1]));
 
 function neighborsOf(deskId) {
   const clusterId = deskId.split("-")[0];
@@ -66,7 +73,7 @@ function neighborsOf(deskId) {
 }
 
 function makeClass() {
-  return { names: "", blocked: [], assignment: {}, constraints: [] };
+  return { names: "", blocked: [], assignment: {}, constraints: [], fixedSeats: [] };
 }
 
 function defaultClasses() {
@@ -192,7 +199,7 @@ function renderBoard() {
         label = cls.assignment[deskId];
       } else {
         desk.classList.add("empty");
-        label = "puste";
+        label = String(DESK_NUMBER[deskId]);
       }
 
       desk.innerHTML = `
@@ -240,6 +247,34 @@ function renderConstraintOptions() {
   const options = names.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
   constraintA.innerHTML = options;
   constraintB.innerHTML = options;
+  fixedSeatName.innerHTML = options;
+}
+
+function renderFixedSeatDeskOptions() {
+  fixedSeatDesk.innerHTML = ALL_DESK_IDS.map(
+    (id) => `<option value="${id}">Stolik ${DESK_NUMBER[id]}</option>`
+  ).join("");
+}
+
+function renderFixedSeatList() {
+  const cls = currentClass();
+  if (!cls.fixedSeats.length) {
+    fixedSeatList.innerHTML = `<li class="constraint-empty" style="list-style:none">Brak stałych miejsc.</li>`;
+    return;
+  }
+  fixedSeatList.innerHTML = cls.fixedSeats
+    .map(
+      (fs, i) =>
+        `<li><span>${escapeHtml(fs.name)} → stolik ${DESK_NUMBER[fs.deskId]}</span><button data-idx="${i}" title="Usuń"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button></li>`
+    )
+    .join("");
+  fixedSeatList.querySelectorAll("button[data-idx]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      cls.fixedSeats.splice(Number(btn.dataset.idx), 1);
+      saveClasses(true);
+      renderFixedSeatList();
+    });
+  });
 }
 
 function renderConstraintList() {
@@ -276,6 +311,8 @@ function renderModalContents() {
   nameCount.textContent = `${getNames(cls.names).length} ${getNames(cls.names).length === 1 ? "uczeń" : "uczniów"}`;
   renderConstraintOptions();
   renderConstraintList();
+  renderFixedSeatDeskOptions();
+  renderFixedSeatList();
 }
 
 // ---------- Seat shuffling with "don't sit together" constraints ----------
@@ -314,14 +351,28 @@ function shuffleSeats() {
     return;
   }
 
+  // Fixed seats only count when the person is still on the roster and their
+  // desk isn't blocked — everyone else (people + desks) gets shuffled freely.
+  const fixed = cls.fixedSeats.filter(
+    (fs) => names.includes(fs.name) && availableSeats.includes(fs.deskId)
+  );
+  const fixedBase = {};
+  fixed.forEach((fs) => {
+    fixedBase[fs.deskId] = fs.name;
+  });
+  const fixedNames = new Set(fixed.map((fs) => fs.name));
+  const fixedSeatIds = new Set(fixed.map((fs) => fs.deskId));
+  const freeNames = names.filter((n) => !fixedNames.has(n));
+  const freeSeats = availableSeats.filter((id) => !fixedSeatIds.has(id));
+
   const attempts = 300;
   let best = null;
   let bestViolations = Infinity;
 
   for (let i = 0; i < attempts && bestViolations > 0; i++) {
-    const shuffledNames = shuffleArray(names);
-    const shuffledSeats = shuffleArray(availableSeats);
-    const assignment = {};
+    const shuffledNames = shuffleArray(freeNames);
+    const shuffledSeats = shuffleArray(freeSeats);
+    const assignment = { ...fixedBase };
     shuffledNames.slice(0, shuffledSeats.length).forEach((name, idx) => {
       assignment[shuffledSeats[idx]] = name;
     });
@@ -532,6 +583,19 @@ addConstraintBtn.addEventListener("click", () => {
   renderConstraintList();
 });
 
+addFixedSeatBtn.addEventListener("click", () => {
+  const name = fixedSeatName.value;
+  const deskId = fixedSeatDesk.value;
+  if (!name || !deskId) return;
+  const cls = currentClass();
+  // A person has at most one fixed seat, and a desk holds at most one
+  // fixed person — adding a new pairing replaces whichever old one clashes.
+  cls.fixedSeats = cls.fixedSeats.filter((fs) => fs.name !== name && fs.deskId !== deskId);
+  cls.fixedSeats.push({ name, deskId });
+  saveClasses(true);
+  renderFixedSeatList();
+});
+
 sidebarToggle.addEventListener("click", () => {
   const collapsed = sidebar.classList.toggle("collapsed");
   try {
@@ -549,6 +613,10 @@ if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1") {
 
 function applyRemoteClasses(classes) {
   state.classes = classes && Object.keys(classes).length ? classes : defaultClasses();
+  // Classes saved before "fixedSeats" existed won't have that field yet.
+  for (const cls of Object.values(state.classes)) {
+    if (!cls.fixedSeats) cls.fixedSeats = [];
+  }
   if (!currentClassName || !state.classes[currentClassName]) {
     currentClassName = Object.keys(state.classes)[0];
   }
