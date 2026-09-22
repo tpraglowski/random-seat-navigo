@@ -263,9 +263,8 @@ textarea {
    rotated around it by different angles, fanning out like flower petals so
    each one's slanted side sits flush against its neighbor's slanted side. */
 .desk {
-  --seat-fill: color-mix(in srgb, var(--accent) 45%, white);
   --angle: 0deg;
-  --spread: 1;
+  --shift: 0px;
   position: absolute;
   top: 0;
   left: -37px;
@@ -273,20 +272,30 @@ textarea {
   height: 68px;
   cursor: pointer;
   user-select: none;
-  transform: rotate(calc(var(--angle) * var(--spread)));
-  transition: transform 0.2s ease;
+  /* translateX runs in real screen space and is applied AFTER rotate (it's
+     listed first), so hover pushes a desk straight sideways regardless of
+     its own fan angle — never by rotating it further. */
+  transform: translateX(var(--shift)) rotate(var(--angle));
+  transition: transform 0.5s ease;
   /* The pivot sits far above the shape, at the point where the trapezoid's two
      slanted sides would meet if extended — so rotating by the trapezoid's own
      angular width (see fanStep in script.js) tiles copies with zero gap and
-     zero overlap, edges landing exactly on top of each other. Hovering a
-     cluster bumps --spread above 1 so the side desks swing further apart. */
+     zero overlap, edges landing exactly on top of each other. */
   transform-origin: 50% -71.78px;
 }
 
-/* .cluster has zero size (its desks are absolutely positioned around a shared
-   pivot), so plain :hover on it wouldn't reliably fire — script.js toggles
-   this class from the desks' own mouseenter/mouseleave instead. */
-.cluster.spread .desk { --spread: 1.6; }
+.desk.active { z-index: 5; }
+
+.desk-inner {
+  --seat-fill: color-mix(in srgb, var(--accent) 45%, white);
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  transition: transform 0.5s ease;
+}
+
+.desk.active .desk-inner { transform: scale(1.22); }
 
 .desk-shape {
   position: absolute;
@@ -309,6 +318,7 @@ textarea {
   stroke: rgba(0, 0, 0, 0.18);
   stroke-width: 2.5;
   stroke-linejoin: round;
+  transition: stroke 0.15s ease;
 }
 
 .desk-label {
@@ -325,11 +335,11 @@ textarea {
   padding: 4px 10px;
   overflow: hidden;
   color: var(--ink);
-  transition: color 0.15s ease, transform 0.2s ease;
-  transform: rotate(calc(-1 * var(--angle) * var(--spread)));
+  transition: color 0.15s ease;
+  transform: rotate(calc(-1 * var(--angle)));
 }
 
-.desk:hover .desk-shape .outline { stroke: rgba(0, 0, 0, 0.32); }
+.desk.active .desk-shape .outline { stroke: rgba(0, 0, 0, 0.32); }
 
 .desk.empty .desk-label {
   font-weight: 600;

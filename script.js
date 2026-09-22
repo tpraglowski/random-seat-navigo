@@ -158,12 +158,13 @@ function renderBoard() {
     // degrees makes each petal's edge land exactly on its neighbor's edge.
     const fanStep = 29.67;
     const mid = (roles.length - 1) / 2;
-    // Draw the petals furthest from center first so the middle one paints on
-    // top and its label is never covered by its neighbors.
-    const drawOrder = roles.map((role, i) => i).sort((a, b) => Math.abs(b - mid) - Math.abs(a - mid));
+    // How far (px, real screen space) a neighbor slides away so the hovered
+    // desk's 1.22x scale-up never covers it.
+    const PUSH = 24;
 
-    drawOrder.forEach((i) => {
-      const role = roles[i];
+    const deskEls = [];
+
+    roles.forEach((role, i) => {
       const deskId = `${cluster.id}-${role}`;
       const desk = document.createElement("div");
       desk.className = "desk";
@@ -184,16 +185,39 @@ function renderBoard() {
       }
 
       desk.innerHTML = `
-        <svg class="desk-shape" viewBox="0 0 74 68" preserveAspectRatio="none">
-          <polygon class="fill" points="18,0 56,0 74,68 0,68" />
-          <polygon class="outline" points="18,0 56,0 74,68 0,68" />
-        </svg>
-        <span class="desk-label">${escapeHtml(label)}</span>
+        <div class="desk-inner">
+          <svg class="desk-shape" viewBox="0 0 74 68" preserveAspectRatio="none">
+            <polygon class="fill" points="18,0 56,0 74,68 0,68" />
+            <polygon class="outline" points="18,0 56,0 74,68 0,68" />
+          </svg>
+          <span class="desk-label">${escapeHtml(label)}</span>
+        </div>
       `;
       desk.addEventListener("click", () => toggleBlocked(deskId));
-      desk.addEventListener("mouseenter", () => clusterEl.classList.add("spread"));
-      desk.addEventListener("mouseleave", () => clusterEl.classList.remove("spread"));
-      clusterEl.appendChild(desk);
+      deskEls.push(desk);
+    });
+
+    // Draw the petals furthest from center first so the middle one paints on
+    // top and its label is never covered by its neighbors at rest.
+    [...deskEls]
+      .sort((a, b) => Math.abs(deskEls.indexOf(b) - mid) - Math.abs(deskEls.indexOf(a) - mid))
+      .forEach((desk) => clusterEl.appendChild(desk));
+
+    deskEls.forEach((desk, i) => {
+      desk.addEventListener("mouseenter", () => {
+        desk.classList.add("active");
+        deskEls.forEach((other, j) => {
+          if (j === i) return;
+          // Positive fan angle renders further to screen-left (see fanStep/angle
+          // above), so a neighbor with a smaller index needs to move further
+          // screen-right (positive shift), not left, to move away from i.
+          other.style.setProperty("--shift", `${j < i ? PUSH : -PUSH}px`);
+        });
+      });
+      desk.addEventListener("mouseleave", () => {
+        desk.classList.remove("active");
+        deskEls.forEach((other) => other.style.setProperty("--shift", "0px"));
+      });
     });
 
     board.appendChild(clusterEl);
