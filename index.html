@@ -28,6 +28,11 @@
       </div>
 
       <div class="sidebar-body" id="sidebarBody">
+        <div class="mode-tabs" id="modeTabs">
+          <button class="mode-tab active" data-mode="seats" type="button">Losowanie miejsc</button>
+          <button class="mode-tab" data-mode="person" type="button">Losowanie osoby</button>
+        </div>
+
         <h2>Klasa</h2>
         <div class="class-row">
           <select id="classSelect"></select>
@@ -40,12 +45,19 @@
         </div>
         <p class="hint" id="classSummary">0 uczniów</p>
 
-        <h2>Sala</h2>
-        <p class="hint">Stały układ stolików. Kliknij stolik na planie, żeby go zablokować lub odblokować.</p>
-        <button id="resetBtn" class="ghost-btn full-btn">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><polyline points="3 4 3 9 8 9" /></svg>
-          Wyczyść plan
-        </button>
+        <div id="seatsOnlySection">
+          <h2>Sala</h2>
+          <p class="hint">Stały układ stolików. Kliknij stolik na planie, żeby go zablokować lub odblokować.</p>
+          <button id="resetBtn" class="ghost-btn full-btn">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><polyline points="3 4 3 9 8 9" /></svg>
+            Wyczyść plan
+          </button>
+        </div>
+
+        <div id="personOnlySection" class="hidden">
+          <h2>Losowanie osoby</h2>
+          <p class="hint">Wylosowana osoba nie pojawi się ponownie przez kolejne 5 losowań.</p>
+        </div>
 
         <p class="sync-status" id="syncStatus"></p>
       </div>
@@ -59,16 +71,23 @@
               <line x1="4" y1="4" x2="9" y2="9" />
             </svg>
           </span>
-          <span class="losuj-label">Losuj</span>
+          <span class="losuj-label" id="losujLabel">Losuj miejsca</span>
         </button>
       </div>
     </aside>
 
     <main class="stage" aria-label="Plan sali">
-      <div class="board-wrap">
+      <div class="board-wrap" id="seatsView">
         <div class="board-front">TABLICA</div>
         <div class="board-scroll">
           <div id="board" class="board"></div>
+        </div>
+      </div>
+
+      <div class="board-wrap person-pick-wrap hidden" id="personView">
+        <div class="board-front">LOSOWANIE OSOBY</div>
+        <div class="person-pick-card">
+          <span class="person-pick-text" id="personPickText">Kliknij „Losuj”</span>
         </div>
       </div>
     </main>

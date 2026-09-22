@@ -39,8 +39,19 @@ const fixedSeatList = document.getElementById("fixedSeatList");
 const syncStatus = document.getElementById("syncStatus");
 const sidebar = document.getElementById("sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
+const modeTabs = document.getElementById("modeTabs");
+const seatsOnlySection = document.getElementById("seatsOnlySection");
+const personOnlySection = document.getElementById("personOnlySection");
+const seatsView = document.getElementById("seatsView");
+const personView = document.getElementById("personView");
+const personPickText = document.getElementById("personPickText");
+const losujLabel = document.getElementById("losujLabel");
 
 const SIDEBAR_COLLAPSED_KEY = "random-seat-navigo-sidebar-collapsed";
+const MODE_KEY = "random-seat-navigo-mode";
+const PICK_COOLDOWN = 5; // a picked person sits out this many following draws
+
+let currentMode = localStorage.getItem(MODE_KEY) === "person" ? "person" : "seats";
 
 function capitalizeWords(text) {
   return text.replace(/(^|\s)(\p{L})/gu, (m, pre, letter) => pre + letter.toLocaleUpperCase("pl"));
@@ -83,7 +94,7 @@ function neighborsOf(deskId) {
 }
 
 function makeClass() {
-  return { names: "", blocked: [], assignment: {}, constraints: [], fixedSeats: [] };
+  return { names: "", blocked: [], assignment: {}, constraints: [], fixedSeats: [], pickHistory: [] };
 }
 
 function defaultClasses() {
@@ -312,6 +323,63 @@ function renderMain() {
   renderClassSelect();
   renderClassSummary();
   renderBoard();
+}
+
+// ---------- Mode switch: seating chart vs. picking one person ----------
+
+function applyMode() {
+  const isPerson = currentMode === "person";
+  modeTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mode === currentMode);
+  });
+  seatsOnlySection.classList.toggle("hidden", isPerson);
+  personOnlySection.classList.toggle("hidden", !isPerson);
+  seatsView.classList.toggle("hidden", isPerson);
+  personView.classList.toggle("hidden", !isPerson);
+  losujLabel.textContent = isPerson ? "Losuj osobę" : "Losuj miejsca";
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  try {
+    localStorage.setItem(MODE_KEY, mode);
+  } catch {
+    // ignore
+  }
+  applyMode();
+}
+
+modeTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+  btn.addEventListener("click", () => setMode(btn.dataset.mode));
+});
+
+applyMode();
+
+// ---------- Pick-one-person mode ----------
+
+function pickPerson() {
+  if (shuffleBtn.disabled) return;
+  const cls = currentClass();
+  const names = getNames(cls.names);
+  if (!names.length) {
+    alert("Brak uczniów na liście — dodaj ich w edycji klasy.");
+    return;
+  }
+
+  // Exclude whoever was picked in the last PICK_COOLDOWN draws, but always
+  // leave at least one candidate even for a very small class.
+  const excludeCount = Math.min(PICK_COOLDOWN, names.length - 1);
+  const excluded = new Set((cls.pickHistory || []).slice(0, excludeCount));
+  const candidates = names.filter((n) => !excluded.has(n));
+  const pool = candidates.length ? candidates : names;
+  const picked = pool[Math.floor(Math.random() * pool.length)];
+
+  shuffleBtn.disabled = true;
+  flickerToFinal(personPickText, names, picked, 900, () => {
+    shuffleBtn.disabled = false;
+    cls.pickHistory = [picked, ...(cls.pickHistory || [])].slice(0, PICK_COOLDOWN);
+    saveClasses(true);
+  });
 }
 
 function renderModalContents() {
@@ -549,7 +617,10 @@ namesInput.addEventListener("input", () => {
   renderConstraintOptions();
 });
 
-shuffleBtn.addEventListener("click", shuffleSeats);
+shuffleBtn.addEventListener("click", () => {
+  if (currentMode === "person") pickPerson();
+  else shuffleSeats();
+});
 
 resetBtn.addEventListener("click", () => {
   if (!confirm("Wyczyścić plan tej klasy (miejsca i blokady)?")) return;
@@ -678,6 +749,7 @@ function applyRemoteClasses(classes) {
         fs.clusterId ? fs : { name: fs.name, clusterId: clusterIdOf(fs.deskId) }
       );
     }
+    if (!cls.pickHistory) cls.pickHistory = [];
   }
   if (!currentClassName || !state.classes[currentClassName]) {
     currentClassName = Object.keys(state.classes)[0];
