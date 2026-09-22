@@ -372,11 +372,21 @@ textarea {
 }
 .desk.blocked .desk-label { color: var(--muted); }
 
-.desk.filled {
-  --seat-fill: color-mix(in srgb, var(--accent) 20%, var(--seat-bg));
-  --seat-edge: var(--accent);
-  color: var(--ink);
+@keyframes desk-shuffle-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
 }
+
+@keyframes desk-shuffle-land {
+  0% { transform: scale(1.2); }
+  60% { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+
+.desk.shuffling .desk-inner { animation: desk-shuffle-pulse 0.3s ease-in-out infinite; }
+.desk.landed .desk-inner { animation: desk-shuffle-land 0.26s ease-out; }
+
+.losuj-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .foot {
   text-align: center;

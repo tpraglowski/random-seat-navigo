@@ -332,22 +332,72 @@ function shuffleSeats() {
     }
   }
 
-  cls.assignment = best;
-  saveClasses(true);
-  renderBoard();
+  animateShuffle(best, () => {
+    cls.assignment = best;
+    saveClasses(true);
+    renderBoard();
 
-  const messages = [];
-  if (names.length > availableSeats.length) {
-    messages.push(
-      `${names.length - availableSeats.length} uczniów zostało bez miejsca (za mało dostępnych miejsc).`
-    );
+    const messages = [];
+    if (names.length > availableSeats.length) {
+      messages.push(
+        `${names.length - availableSeats.length} uczniów zostało bez miejsca (za mało dostępnych miejsc).`
+      );
+    }
+    if (bestViolations > 0) {
+      messages.push(
+        `Nie udało się spełnić ${bestViolations} ${bestViolations === 1 ? "reguły" : "reguł"} rozsadzenia przy tym układzie sali. Spróbuj wylosować ponownie albo zwiększ salę.`
+      );
+    }
+    if (messages.length) alert(messages.join("\n"));
+  });
+}
+
+// Slot-machine style reveal: each filled desk flickers through random names
+// before landing on its real one, staggered so the whole board settles
+// left-to-right-ish instead of all at once.
+function animateShuffle(finalAssignment, onDone) {
+  if (shuffleBtn.disabled) return;
+  shuffleBtn.disabled = true;
+
+  const deskEls = [...board.querySelectorAll(".desk")];
+  const pool = Object.values(finalAssignment);
+  let pending = 0;
+
+  deskEls.forEach((desk, idx) => {
+    const key = desk.dataset.key;
+    const finalName = finalAssignment[key];
+    if (!finalName || !pool.length) return;
+
+    const label = desk.querySelector(".desk-label");
+    const stagger = idx * 70;
+    const spinFor = 480 + Math.random() * 220;
+    pending++;
+
+    setTimeout(() => {
+      desk.classList.remove("empty");
+      desk.classList.add("filled", "shuffling");
+      const spin = setInterval(() => {
+        label.textContent = pool[Math.floor(Math.random() * pool.length)];
+      }, 55);
+
+      setTimeout(() => {
+        clearInterval(spin);
+        label.textContent = finalName;
+        desk.classList.remove("shuffling");
+        desk.classList.add("landed");
+        setTimeout(() => desk.classList.remove("landed"), 260);
+        if (--pending === 0) {
+          shuffleBtn.disabled = false;
+          onDone();
+        }
+      }, spinFor);
+    }, stagger);
+  });
+
+  if (pending === 0) {
+    shuffleBtn.disabled = false;
+    onDone();
   }
-  if (bestViolations > 0) {
-    messages.push(
-      `Nie udało się spełnić ${bestViolations} ${bestViolations === 1 ? "reguły" : "reguł"} rozsadzenia przy tym układzie sali. Spróbuj wylosować ponownie albo zwiększ salę.`
-    );
-  }
-  if (messages.length) alert(messages.join("\n"));
 }
 
 function toggleBlocked(key) {
