@@ -218,7 +218,7 @@ function renderBoard() {
             <polygon class="fill" points="18,0 56,0 74,68 0,68" />
             <polygon class="outline" points="18,0 56,0 74,68 0,68" />
           </svg>
-          <span class="desk-label">${escapeHtml(label)}</span>
+          <span class="desk-label"><span class="desk-label-text">${escapeHtml(label)}</span></span>
         </div>
       `;
       desk.addEventListener("click", () => toggleBlocked(deskId));
@@ -424,17 +424,25 @@ function shuffleSeats() {
 // Slot-machine style reveal, table by table: every desk within one cluster
 // flickers through random names together, decelerating like a spinning reel
 // slowing to a stop, then lands with a soft bounce — table 1 settles, then
-// table 2, and so on, instead of a flat per-seat stagger.
-function flickerToFinal(label, pool, finalName, totalMs, onLanded) {
+// table 2, and so on, instead of a flat per-seat stagger. Each candidate name
+// drops in from above rather than just swapping in place.
+function dropInText(textEl, text, isFinal) {
+  textEl.textContent = text;
+  textEl.classList.remove("drop-in", "drop-in-final");
+  void textEl.offsetWidth; // force reflow so the animation restarts every tick
+  textEl.classList.add(isFinal ? "drop-in-final" : "drop-in");
+}
+
+function flickerToFinal(textEl, pool, finalName, totalMs, onLanded) {
   let elapsed = 0;
   let delay = 45;
   function tick() {
     if (elapsed + delay >= totalMs) {
-      label.textContent = finalName;
+      dropInText(textEl, finalName, true);
       onLanded();
       return;
     }
-    label.textContent = pool[Math.floor(Math.random() * pool.length)];
+    dropInText(textEl, pool[Math.floor(Math.random() * pool.length)], false);
     elapsed += delay;
     delay *= 1.16; // ease out: each flip takes a little longer, like it's slowing down
     setTimeout(tick, delay);
@@ -472,7 +480,7 @@ function animateShuffle(finalAssignment, onDone) {
     const spinFor = 620 + Math.random() * 180;
     pending++;
 
-    const label = desk.querySelector(".desk-label");
+    const label = desk.querySelector(".desk-label-text");
 
     setTimeout(() => {
       desk.classList.remove("empty");
