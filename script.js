@@ -51,6 +51,9 @@ const speedTabs = document.getElementById("speedTabs");
 const speedTabPill = document.getElementById("speedTabPill");
 const priorityTabs = document.getElementById("priorityTabs");
 const priorityTabPill = document.getElementById("priorityTabPill");
+const effectsTabs = document.getElementById("effectsTabs");
+const effectsTabPill = document.getElementById("effectsTabPill");
+const leavesLayer = document.getElementById("leavesLayer");
 const seatsOnlySection = document.getElementById("seatsOnlySection");
 const personOnlySection = document.getElementById("personOnlySection");
 const groupsOnlySection = document.getElementById("groupsOnlySection");
@@ -425,6 +428,7 @@ function moveAllPills() {
   movePill(themeTabs, themeTabPill);
   movePill(speedTabs, speedTabPill);
   movePill(priorityTabs, priorityTabPill);
+  movePill(effectsTabs, effectsTabPill);
 }
 
 function applyMode() {
@@ -480,6 +484,9 @@ let shuffleSpeed = localStorage.getItem(SPEED_KEY) === "short" ? "short" : "long
 const storedPriority = localStorage.getItem(PRIORITY_KEY);
 let seatPriority = storedPriority === "closest" || storedPriority === "min2" ? storedPriority : "random";
 
+const EFFECTS_KEY = "random-seat-navigo-effects";
+let specialEffects = localStorage.getItem(EFFECTS_KEY) === "on" ? "on" : "off";
+
 const SPEED_PRESETS = {
   long: { tableStagger: 260, seatStagger: 60, spinBase: 620, spinRand: 180, tickStart: 45, tickGrowth: 1.16, pickMs: 900 },
   short: { tableStagger: 70, seatStagger: 20, spinBase: 200, spinRand: 70, tickStart: 28, tickGrowth: 1.1, pickMs: 320 },
@@ -506,6 +513,64 @@ function applySeatPriority() {
     btn.classList.toggle("active", btn.dataset.priority === seatPriority);
   });
   movePill(priorityTabs, priorityTabPill);
+}
+
+// ---------- Special effects: orange theme + falling leaves ----------
+
+const LEAF_COLORS = ["#e8730b", "#c0392b", "#e0b23c"];
+// A pointed almond silhouette (tips top and bottom) reads as a leaf even at
+// tiny sizes while spinning — the earlier rounder outline just looked like a
+// dot once it got small.
+const LEAF_SHAPE = `
+  <path d="M12 1C21 7 21 17 12 23C3 17 3 7 12 1Z" />
+  <path d="M12 3v18" stroke="rgba(0,0,0,0.3)" stroke-width="1" fill="none" />
+`;
+let leafInterval = null;
+
+function spawnLeaf() {
+  const leaf = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  leaf.setAttribute("viewBox", "0 0 24 24");
+  leaf.classList.add("leaf");
+  leaf.style.fill = LEAF_COLORS[Math.floor(Math.random() * LEAF_COLORS.length)];
+  leaf.innerHTML = LEAF_SHAPE;
+
+  const size = 16 + Math.random() * 14;
+  const duration = 7 + Math.random() * 6;
+  leaf.style.width = `${size}px`;
+  leaf.style.height = `${size}px`;
+  leaf.style.left = `${Math.random() * 100}%`;
+  leaf.style.setProperty("--drift", `${Math.random() * 160 - 80}px`);
+  leaf.style.setProperty("--spin", `${(Math.random() > 0.5 ? 1 : -1) * (360 + Math.random() * 360)}deg`);
+  leaf.style.animationDuration = `${duration}s`;
+
+  leavesLayer.appendChild(leaf);
+  setTimeout(() => leaf.remove(), duration * 1000 + 100);
+}
+
+function startLeaves() {
+  if (leafInterval) return;
+  spawnLeaf();
+  leafInterval = setInterval(spawnLeaf, 550);
+}
+
+function stopLeaves() {
+  clearInterval(leafInterval);
+  leafInterval = null;
+  leavesLayer.innerHTML = "";
+}
+
+function applyEffects() {
+  if (specialEffects === "on") {
+    document.documentElement.setAttribute("data-effects", "on");
+    startLeaves();
+  } else {
+    document.documentElement.removeAttribute("data-effects");
+    stopLeaves();
+  }
+  effectsTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.effects === specialEffects);
+  });
+  movePill(effectsTabs, effectsTabPill);
 }
 
 themeTabs.querySelectorAll(".mode-tab").forEach((btn) => {
@@ -544,6 +609,18 @@ priorityTabs.querySelectorAll(".mode-tab").forEach((btn) => {
   });
 });
 
+effectsTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    specialEffects = btn.dataset.effects;
+    try {
+      localStorage.setItem(EFFECTS_KEY, specialEffects);
+    } catch {
+      // ignore
+    }
+    applyEffects();
+  });
+});
+
 settingsBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   const willOpen = settingsPanel.classList.contains("hidden");
@@ -563,6 +640,7 @@ document.addEventListener("click", (e) => {
 applyTheme();
 applySpeed();
 applySeatPriority();
+applyEffects();
 
 // ---------- Timer (minutnik) ----------
 

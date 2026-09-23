@@ -30,6 +30,14 @@
   color-scheme: dark;
 }
 
+:root[data-effects="on"] {
+  --accent: #e8730b;
+}
+
+:root[data-theme="dark"][data-effects="on"] {
+  --accent: #ff9f40;
+}
+
 * { box-sizing: border-box; }
 
 .hidden { display: none !important; }
@@ -1002,4 +1010,25 @@ textarea {
   font-size: 0.82rem;
   color: var(--muted);
   margin: 8px 0 0;
+}
+
+.leaves-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.leaf {
+  position: absolute;
+  top: -40px;
+  animation-name: leaf-fall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes leaf-fall {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(var(--drift), 110vh) rotate(var(--spin)); }
 }
