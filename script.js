@@ -72,6 +72,9 @@ const timerBtn = document.getElementById("timerBtn");
 const timerBadge = document.getElementById("timerBadge");
 const timerPanel = document.getElementById("timerPanel");
 const timerDisplay = document.getElementById("timerDisplay");
+const timerMinutesInput = document.getElementById("timerMinutesInput");
+const timerSecondsInput = document.getElementById("timerSecondsInput");
+const timerSetBtn = document.getElementById("timerSetBtn");
 const timerMinus = document.getElementById("timerMinus");
 const timerPlus = document.getElementById("timerPlus");
 const timerStartBtn = document.getElementById("timerStartBtn");
@@ -671,9 +674,13 @@ function formatTime(secs) {
 function renderTimer() {
   timerDisplay.textContent = formatTime(timerRemaining);
   timerStartBtn.textContent = timerRunning ? "Pauza" : "Start";
-  timerPanel.querySelectorAll(".timer-presets button, .timer-adjust button").forEach((btn) => {
-    btn.disabled = timerRunning;
-  });
+  if (document.activeElement !== timerMinutesInput) timerMinutesInput.value = Math.floor(timerTotal / 60);
+  if (document.activeElement !== timerSecondsInput) timerSecondsInput.value = timerTotal % 60;
+  timerPanel
+    .querySelectorAll(".timer-presets button, .timer-adjust button, .timer-manual input, .timer-manual button")
+    .forEach((el) => {
+      el.disabled = timerRunning;
+    });
   if (timerRunning || timerRemaining !== timerTotal) {
     timerBadge.textContent = formatTime(timerRemaining);
     timerBadge.classList.remove("hidden");
@@ -752,6 +759,18 @@ timerPanel.querySelectorAll(".timer-presets button").forEach((btn) => {
 });
 timerMinus.addEventListener("click", () => setTimerSeconds(timerTotal - 60));
 timerPlus.addEventListener("click", () => setTimerSeconds(timerTotal + 60));
+
+function applyManualTimer() {
+  const mins = Math.max(0, parseInt(timerMinutesInput.value, 10) || 0);
+  const secs = Math.max(0, parseInt(timerSecondsInput.value, 10) || 0);
+  setTimerSeconds(mins * 60 + secs);
+}
+timerSetBtn.addEventListener("click", applyManualTimer);
+[timerMinutesInput, timerSecondsInput].forEach((input) => {
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") applyManualTimer();
+  });
+});
 timerStartBtn.addEventListener("click", startPauseTimer);
 timerResetBtn.addEventListener("click", resetTimer);
 

@@ -301,6 +301,48 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.timer-manual {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.timer-manual input[type="number"] {
+  width: 0;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  background: var(--seat-bg);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 4px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.timer-manual input[type="number"]::-webkit-inner-spin-button,
+.timer-manual input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.timer-manual input[type="number"] { -moz-appearance: textfield; }
+
+.timer-manual-sep { color: var(--muted); font-weight: 700; }
+
+.timer-manual .ghost-btn {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.timer-manual input:disabled,
+.timer-manual button:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .timer-presets {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

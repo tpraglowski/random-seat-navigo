@@ -52,6 +52,12 @@
       <div class="timer-panel hidden" id="timerPanel">
         <h3>Minutnik</h3>
         <div class="timer-display" id="timerDisplay">05:00</div>
+        <div class="timer-manual">
+          <input type="number" id="timerMinutesInput" min="0" max="90" value="5" aria-label="Minuty" />
+          <span class="timer-manual-sep">:</span>
+          <input type="number" id="timerSecondsInput" min="0" max="59" value="0" aria-label="Sekundy" />
+          <button type="button" class="ghost-btn" id="timerSetBtn">Ustaw</button>
+        </div>
         <div class="timer-presets">
           <button type="button" data-secs="60">1 min</button>
           <button type="button" data-secs="180">3 min</button>
