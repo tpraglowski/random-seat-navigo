@@ -600,8 +600,14 @@ function animateShuffle(finalAssignment, onDone) {
 
   deskEls.forEach((desk) => {
     const key = desk.dataset.key;
+    // Blocked desks never take part in the shuffle and never change, so they
+    // sit the animation out — but every other desk spins, even ones that end
+    // up empty (there just weren't enough students for every seat).
+    if (desk.classList.contains("blocked") || !pool.length) return;
+
     const finalName = finalAssignment[key];
-    if (!finalName || !pool.length) return;
+    const isFilled = Boolean(finalName);
+    const finalLabel = isFilled ? finalName : String(CLUSTER_NUMBER[clusterIdOf(key)]);
 
     const cid = clusterIdOf(key);
     const tableStagger = clusterOrderSeen.indexOf(cid) * TABLE_STAGGER;
@@ -614,10 +620,14 @@ function animateShuffle(finalAssignment, onDone) {
 
     setTimeout(() => {
       desk.classList.remove("empty");
-      desk.classList.add("filled", "shuffling");
+      desk.classList.add("filled", "shuffling"); // vivid color while spinning either way
 
-      flickerToFinal(label, pool, finalName, spinFor, () => {
+      flickerToFinal(label, pool, finalLabel, spinFor, () => {
         desk.classList.remove("shuffling");
+        if (!isFilled) {
+          desk.classList.remove("filled");
+          desk.classList.add("empty");
+        }
         desk.classList.add("landed");
         setTimeout(() => desk.classList.remove("landed"), 420);
         if (--pending === 0) {
