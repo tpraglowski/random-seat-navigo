@@ -49,6 +49,8 @@ const themeTabs = document.getElementById("themeTabs");
 const themeTabPill = document.getElementById("themeTabPill");
 const speedTabs = document.getElementById("speedTabs");
 const speedTabPill = document.getElementById("speedTabPill");
+const priorityTabs = document.getElementById("priorityTabs");
+const priorityTabPill = document.getElementById("priorityTabPill");
 const seatsOnlySection = document.getElementById("seatsOnlySection");
 const personOnlySection = document.getElementById("personOnlySection");
 const groupsOnlySection = document.getElementById("groupsOnlySection");
@@ -140,6 +142,11 @@ const ALL_DESK_IDS = DESK_LAYOUT.flatMap((cluster) => rolesOf(cluster).map((role
 // (near the board), the small 2-desk one, middle, bottom-right, bottom-middle.
 const CLUSTER_ORDER = ["C", "B", "A", "D", "E", "F"];
 const CLUSTER_NUMBER = Object.fromEntries(CLUSTER_ORDER.map((id, i) => [id, i + 1]));
+
+// Cluster order by literal distance from the board (smallest y = closest to
+// "TABLICA") — used by the "closest to the board" seating priority, distinct
+// from CLUSTER_ORDER above which follows the teacher's reading path instead.
+const PROXIMITY_ORDER = [...DESK_LAYOUT].sort((a, b) => a.y - b.y).map((c) => c.id);
 function clusterIdOf(deskId) {
   return deskId.split("-")[0];
 }
@@ -417,6 +424,7 @@ function moveAllPills() {
   movePill(modeTabs, modeTabPill);
   movePill(themeTabs, themeTabPill);
   movePill(speedTabs, speedTabPill);
+  movePill(priorityTabs, priorityTabPill);
 }
 
 function applyMode() {
@@ -465,9 +473,12 @@ applyMode();
 
 const THEME_KEY = "random-seat-navigo-theme";
 const SPEED_KEY = "random-seat-navigo-speed";
+const PRIORITY_KEY = "random-seat-navigo-seat-priority";
 
 let currentTheme = localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
 let shuffleSpeed = localStorage.getItem(SPEED_KEY) === "short" ? "short" : "long";
+const storedPriority = localStorage.getItem(PRIORITY_KEY);
+let seatPriority = storedPriority === "closest" || storedPriority === "min2" ? storedPriority : "random";
 
 const SPEED_PRESETS = {
   long: { tableStagger: 260, seatStagger: 60, spinBase: 620, spinRand: 180, tickStart: 45, tickGrowth: 1.16, pickMs: 900 },
@@ -488,6 +499,13 @@ function applySpeed() {
     btn.classList.toggle("active", btn.dataset.speed === shuffleSpeed);
   });
   movePill(speedTabs, speedTabPill);
+}
+
+function applySeatPriority() {
+  priorityTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.priority === seatPriority);
+  });
+  movePill(priorityTabs, priorityTabPill);
 }
 
 themeTabs.querySelectorAll(".mode-tab").forEach((btn) => {
@@ -514,6 +532,18 @@ speedTabs.querySelectorAll(".mode-tab").forEach((btn) => {
   });
 });
 
+priorityTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    seatPriority = btn.dataset.priority;
+    try {
+      localStorage.setItem(PRIORITY_KEY, seatPriority);
+    } catch {
+      // ignore
+    }
+    applySeatPriority();
+  });
+});
+
 settingsBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   const willOpen = settingsPanel.classList.contains("hidden");
@@ -532,6 +562,7 @@ document.addEventListener("click", (e) => {
 
 applyTheme();
 applySpeed();
+applySeatPriority();
 
 // ---------- Timer (minutnik) ----------
 
@@ -787,6 +818,92 @@ function countViolations(assignment, constraints) {
   return violations;
 }
 
+// Groups free seats by cluster, in the same shape every seat-priority builder
+// below needs (cluster id -> that cluster's currently-free desk ids).
+function groupSeatsByCluster(freeSeats) {
+  const byCluster = {};
+  freeSeats.forEach((id) => {
+    const cid = clusterIdOf(id);
+    (byCluster[cid] ||= []).push(id);
+  });
+  return byCluster;
+}
+
+// Every combination of per-cluster counts (each either 0 or somewhere in
+// [2, cap]) that sums exactly to n — the search space is tiny (at most 6
+// clusters, capacity 2 or 3 each) so brute force is instant.
+function findMinTwoCombos(n, caps) {
+  const results = [];
+  function rec(idx, remaining, counts) {
+    if (idx === caps.length) {
+      if (remaining === 0) results.push([...counts]);
+      return;
+    }
+    counts.push(0);
+    rec(idx + 1, remaining, counts);
+    counts.pop();
+    const maxTake = Math.min(caps[idx], remaining);
+    for (let take = 2; take <= maxTake; take++) {
+      counts.push(take);
+      rec(idx + 1, remaining - take, counts);
+      counts.pop();
+    }
+  }
+  rec(0, n, []);
+  return results;
+}
+
+// Seat order for the "closest to the board" priority: fill clusters nearest
+// the board first (see PROXIMITY_ORDER), each one fully before moving to the
+// next, so a partial class leaves only the far clusters empty.
+function proximityOrderedSeats(freeSeats) {
+  const byCluster = groupSeatsByCluster(freeSeats);
+  return PROXIMITY_ORDER.filter((cid) => byCluster[cid]).flatMap((cid) => shuffleArray(byCluster[cid]));
+}
+
+// Seat order for the "at least 2 per table" priority: pick a random valid
+// split of `seatCount` people across clusters where every used cluster gets
+// 2 or more (or is left completely empty), then return those seats first,
+// followed by the untouched ones (which the caller never reaches).
+function minTwoOrderedSeats(freeSeats, seatCount) {
+  if (!freeSeats.length || !seatCount) return shuffleArray(freeSeats);
+
+  const byCluster = groupSeatsByCluster(freeSeats);
+  const clusterIds = shuffleArray(Object.keys(byCluster));
+  const caps = clusterIds.map((cid) => byCluster[cid].length);
+
+  let combos = findMinTwoCombos(seatCount, caps);
+  if (!combos.length) {
+    // No exact split avoids a lone seat (only possible when seatCount itself
+    // can't be reached, e.g. exactly 1 person left over) — seat that person
+    // at a table that already has room rather than dropping them entirely.
+    combos = findMinTwoCombos(seatCount - 1, caps);
+    if (combos.length) {
+      const combo = [...combos[Math.floor(Math.random() * combos.length)]];
+      const bumpIdx = combo.findIndex((c, i) => c > 0 && c < caps[i]);
+      if (bumpIdx >= 0) combo[bumpIdx] += 1;
+      else combo[combo.findIndex((c) => c === 0)] = 1;
+      combos = [combo];
+    }
+  }
+  const counts = combos.length ? combos[Math.floor(Math.random() * combos.length)] : caps.map(() => 0);
+
+  const used = [];
+  const unused = [];
+  clusterIds.forEach((cid, i) => {
+    const seats = shuffleArray(byCluster[cid]);
+    used.push(...seats.slice(0, counts[i]));
+    unused.push(...seats.slice(counts[i]));
+  });
+  return [...used, ...unused];
+}
+
+function buildSeatOrder(freeSeats, seatCount) {
+  if (seatPriority === "closest") return proximityOrderedSeats(freeSeats);
+  if (seatPriority === "min2") return minTwoOrderedSeats(freeSeats, seatCount);
+  return shuffleArray(freeSeats);
+}
+
 function shuffleSeats() {
   const cls = currentClass();
   const names = getNames(cls.names);
@@ -820,6 +937,7 @@ function shuffleSeats() {
   const fixedNames = new Set(Object.values(fixedBase));
   const freeNames = names.filter((n) => !fixedNames.has(n));
   const freeSeats = availableSeats.filter((id) => !claimedSeats.has(id));
+  const seatCount = Math.min(freeNames.length, freeSeats.length);
 
   const attempts = 300;
   let best = null;
@@ -827,10 +945,10 @@ function shuffleSeats() {
 
   for (let i = 0; i < attempts && bestViolations > 0; i++) {
     const shuffledNames = shuffleArray(freeNames);
-    const shuffledSeats = shuffleArray(freeSeats);
+    const seatOrder = buildSeatOrder(freeSeats, seatCount);
     const assignment = { ...fixedBase };
-    shuffledNames.slice(0, shuffledSeats.length).forEach((name, idx) => {
-      assignment[shuffledSeats[idx]] = name;
+    shuffledNames.slice(0, seatOrder.length).forEach((name, idx) => {
+      assignment[seatOrder[idx]] = name;
     });
     const violations = countViolations(assignment, cls.constraints);
     if (violations < bestViolations) {

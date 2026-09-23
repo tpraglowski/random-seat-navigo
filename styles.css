@@ -333,7 +333,7 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: 220px;
+  width: 260px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -351,9 +351,13 @@ body {
 
 .settings-panel h3:not(:first-child) { margin-top: 14px; }
 
+.settings-hint { font-size: 0.75rem; margin: 0 0 8px; }
+
 .sub-tabs { width: 100%; background: var(--seat-bg); box-shadow: none; }
 .sub-tabs .mode-tab { padding: 7px 10px; font-size: 0.75rem; }
 .sub-tabs .mode-tab:not(.active) { color: var(--ink); }
+
+.sub-tabs-3 .mode-tab { padding: 7px 6px; font-size: 0.68rem; line-height: 1.2; }
 
 @media (max-width: 520px) {
   /* Narrow header can't fit the tabs beside the logo without covering the
