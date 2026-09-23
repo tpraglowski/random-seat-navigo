@@ -1076,13 +1076,61 @@ function animateGroups(groups, onDone) {
   }, maxDelay + 400);
 }
 
-// ---------- Show last drawn groups as colors on the seating plan ----------
+// ---------- Seat the last drawn groups together at shared tables ----------
+
+// Bin-packs each group into as few tables as possible (largest groups and
+// largest tables first) so everyone in a group ends up at the SAME table
+// whenever it fits, splitting across more than one table only when a group
+// is bigger than any single table's capacity — never mixing two groups at
+// one table just to fill a spare seat.
+function arrangeGroupsOnBoard() {
+  const cls = currentClass();
+  const availableSeats = ALL_DESK_IDS.filter((id) => !cls.blocked.includes(id));
+  if (!availableSeats.length) {
+    alert("Brak dostępnych stolików — odblokuj miejsca na planie.");
+    return;
+  }
+
+  const clusters = Object.values(groupSeatsByCluster(availableSeats))
+    .map((seats) => shuffleArray(seats))
+    .sort((a, b) => b.length - a.length);
+
+  const groupsBySize = lastGroups.map((names) => [...names]).sort((a, b) => b.length - a.length);
+
+  const assignment = {};
+  const unseated = [];
+  let clusterIdx = 0;
+
+  groupsBySize.forEach((names) => {
+    let remaining = names;
+    while (remaining.length && clusterIdx < clusters.length) {
+      const seats = clusters[clusterIdx];
+      const take = remaining.slice(0, seats.length);
+      take.forEach((name, i) => (assignment[seats[i]] = name));
+      remaining = remaining.slice(take.length);
+      clusterIdx++;
+    }
+    unseated.push(...remaining);
+  });
+
+  showGroupColorsOnBoard = true;
+  setMode("seats");
+
+  animateShuffle(assignment, () => {
+    cls.assignment = assignment;
+    saveClasses(true);
+    renderBoard();
+    if (unseated.length) {
+      alert(
+        `${unseated.length} ${unseated.length === 1 ? "uczeń nie zmieścił się" : "uczniów nie zmieściło się"} przy stolikach — za mało miejsc, by posadzić wszystkie grupy przy osobnych stolikach.`
+      );
+    }
+  });
+}
 
 showGroupsOnBoardBtn.addEventListener("click", () => {
   if (!lastGroups) return;
-  showGroupColorsOnBoard = true;
-  setMode("seats");
-  renderBoard();
+  arrangeGroupsOnBoard();
 });
 
 clearGroupColorsBtn.addEventListener("click", () => {
