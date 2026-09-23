@@ -45,6 +45,7 @@ const modeTabs = document.getElementById("modeTabs");
 const modeTabPill = document.getElementById("modeTabPill");
 const settingsBtn = document.getElementById("settingsBtn");
 const settingsPanel = document.getElementById("settingsPanel");
+const settingsFullscreenBtn = document.getElementById("settingsFullscreenBtn");
 const themeTabs = document.getElementById("themeTabs");
 const themeTabPill = document.getElementById("themeTabPill");
 const speedTabs = document.getElementById("speedTabs");
@@ -84,6 +85,7 @@ const losujLabel = document.getElementById("losujLabel");
 const timerBtn = document.getElementById("timerBtn");
 const timerBadge = document.getElementById("timerBadge");
 const timerPanel = document.getElementById("timerPanel");
+const timerFullscreenBtn = document.getElementById("timerFullscreenBtn");
 const timerDisplay = document.getElementById("timerDisplay");
 const timerMinutesInput = document.getElementById("timerMinutesInput");
 const timerSecondsInput = document.getElementById("timerSecondsInput");
@@ -705,12 +707,15 @@ settingsBtn.addEventListener("click", (e) => {
   if (willOpen) {
     moveAllPills();
     timerPanel.classList.add("hidden");
+  } else {
+    setPanelFullscreen(settingsPanel, settingsFullscreenBtn, false);
   }
 });
 
 document.addEventListener("click", (e) => {
   if (!settingsPanel.classList.contains("hidden") && !e.target.closest(".settings-wrap")) {
     settingsPanel.classList.add("hidden");
+    setPanelFullscreen(settingsPanel, settingsFullscreenBtn, false);
   }
 });
 
@@ -718,6 +723,38 @@ applyTheme();
 applySpeed();
 applySeatPriority();
 applyEffects();
+
+// ---------- Panel fullscreen toggle (timer + settings) ----------
+
+const PANEL_MAXIMIZE_ICON =
+  '<path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" /><path d="M8 21H5a2 2 0 0 1-2-2v-3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />';
+const PANEL_MINIMIZE_ICON =
+  '<path d="M9 3v4a2 2 0 0 1-2 2H3" /><path d="M15 3v4a2 2 0 0 0 2 2h4" /><path d="M9 21v-4a2 2 0 0 0-2-2H3" /><path d="M15 21v-4a2 2 0 0 1 2-2h4" />';
+
+function setPanelFullscreen(panel, btn, on) {
+  panel.classList.toggle("fullscreen", on);
+  btn.querySelector("svg").innerHTML = on ? PANEL_MINIMIZE_ICON : PANEL_MAXIMIZE_ICON;
+  btn.title = on ? "Wyjdź z pełnego ekranu" : "Pełny ekran";
+  // Sub-tab pills are sized in px from the old (compact vs. fullscreen)
+  // layout — recompute once the new width has actually been laid out.
+  requestAnimationFrame(moveAllPills);
+}
+
+timerFullscreenBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  setPanelFullscreen(timerPanel, timerFullscreenBtn, !timerPanel.classList.contains("fullscreen"));
+});
+
+settingsFullscreenBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  setPanelFullscreen(settingsPanel, settingsFullscreenBtn, !settingsPanel.classList.contains("fullscreen"));
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (timerPanel.classList.contains("fullscreen")) setPanelFullscreen(timerPanel, timerFullscreenBtn, false);
+  if (settingsPanel.classList.contains("fullscreen")) setPanelFullscreen(settingsPanel, settingsFullscreenBtn, false);
+});
 
 // ---------- Timer (minutnik) ----------
 
@@ -844,11 +881,13 @@ timerBtn.addEventListener("click", (e) => {
   const willOpen = timerPanel.classList.contains("hidden");
   timerPanel.classList.toggle("hidden");
   if (willOpen) settingsPanel.classList.add("hidden");
+  else setPanelFullscreen(timerPanel, timerFullscreenBtn, false);
 });
 
 document.addEventListener("click", (e) => {
   if (!timerPanel.classList.contains("hidden") && !e.target.closest(".timer-wrap")) {
     timerPanel.classList.add("hidden");
+    setPanelFullscreen(timerPanel, timerFullscreenBtn, false);
   }
 });
 

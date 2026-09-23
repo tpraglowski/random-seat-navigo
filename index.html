@@ -50,7 +50,15 @@
       </button>
 
       <div class="timer-panel hidden" id="timerPanel">
-        <h3>Minutnik</h3>
+        <div class="panel-head">
+          <h3>Minutnik</h3>
+          <button class="icon-btn panel-fullscreen-btn" id="timerFullscreenBtn" title="Pełny ekran" type="button">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" />
+              <path d="M8 21H5a2 2 0 0 1-2-2v-3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+            </svg>
+          </button>
+        </div>
         <div class="timer-display" id="timerDisplay">05:00</div>
         <div class="timer-manual">
           <input type="number" id="timerMinutesInput" min="0" max="90" value="5" aria-label="Minuty" />
@@ -84,6 +92,15 @@
       </button>
 
       <div class="settings-panel hidden" id="settingsPanel">
+        <div class="panel-head">
+          <span class="panel-title">Ustawienia</span>
+          <button class="icon-btn panel-fullscreen-btn" id="settingsFullscreenBtn" title="Pełny ekran" type="button">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" />
+              <path d="M8 21H5a2 2 0 0 1-2-2v-3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+            </svg>
+          </button>
+        </div>
         <h3>Tryb jasności</h3>
         <div class="mode-tabs sub-tabs" id="themeTabs">
           <span class="mode-tab-pill" id="themeTabPill"></span>

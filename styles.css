@@ -284,6 +284,81 @@ body {
   padding: 14px;
 }
 
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.panel-head h3,
+.panel-head .panel-title {
+  margin: 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.panel-fullscreen-btn {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.panel-fullscreen-btn .icon { width: 14px; height: 14px; }
+
+.timer-panel.fullscreen,
+.settings-panel.fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  border-radius: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 70px 24px 40px;
+  overflow-y: auto;
+}
+
+.timer-panel.fullscreen .panel-head,
+.settings-panel.fullscreen .panel-head {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  left: 24px;
+  margin: 0;
+}
+
+.timer-panel.fullscreen .timer-display {
+  font-size: clamp(5rem, 22vw, 16rem);
+  margin: 0 0 40px;
+}
+
+.timer-panel.fullscreen .timer-manual,
+.timer-panel.fullscreen .timer-presets,
+.timer-panel.fullscreen .timer-adjust,
+.timer-panel.fullscreen .timer-actions {
+  width: 100%;
+  max-width: 420px;
+}
+
+.settings-panel.fullscreen h3,
+.settings-panel.fullscreen p,
+.settings-panel.fullscreen .sub-tabs {
+  width: 100%;
+  max-width: 420px;
+}
+
+.settings-panel.fullscreen h3 { font-size: 1rem; margin-top: 28px; }
+.settings-panel.fullscreen .sub-tabs .mode-tab { font-size: 1rem; padding: 14px 10px; }
+
 .timer-panel h3 {
   margin: 0 0 10px;
   font-size: 0.72rem;
