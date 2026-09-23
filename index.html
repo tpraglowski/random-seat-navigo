@@ -159,6 +159,7 @@
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7" /><polyline points="3 4 3 9 8 9" /></svg>
             Wyczyść plan
           </button>
+          <button id="clearGroupColorsBtn" class="ghost-btn full-btn hidden" type="button">Wyłącz kolory grup</button>
         </div>
 
         <div id="personOnlySection" class="hidden">
@@ -169,11 +170,26 @@
         <div id="groupsOnlySection" class="hidden">
           <h2>Grupy</h2>
           <p class="hint">Podziel klasę losowo na grupy.</p>
-          <div class="class-row">
+
+          <div class="mode-tabs sub-tabs" id="groupModeTabs">
+            <span class="mode-tab-pill" id="groupModeTabPill"></span>
+            <button class="mode-tab active" data-group-mode="count" type="button">Liczba grup</button>
+            <button class="mode-tab" data-group-mode="size" type="button">Osób w grupie</button>
+          </div>
+
+          <div class="class-row" id="groupCountRow">
             <button id="groupCountMinus" class="icon-btn" title="Mniej grup">−</button>
             <input type="number" id="groupCountInput" min="2" max="12" value="4" />
             <button id="groupCountPlus" class="icon-btn" title="Więcej grup">+</button>
           </div>
+
+          <div class="class-row hidden" id="groupSizeRow">
+            <button id="groupSizeMinus" class="icon-btn" title="Mniej osób">−</button>
+            <input type="number" id="groupSizeInput" min="2" max="10" value="3" />
+            <button id="groupSizePlus" class="icon-btn" title="Więcej osób">+</button>
+          </div>
+
+          <button id="showGroupsOnBoardBtn" class="ghost-btn full-btn hidden" type="button">Pokaż grupy na planie klasy</button>
         </div>
 
         <p class="sync-status" id="syncStatus"></p>
@@ -257,6 +273,18 @@
           </button>
         </div>
         <ul class="constraint-list" id="constraintList"></ul>
+
+        <h3>Kryteria grup</h3>
+        <p class="hint">Wskaż osoby, które nie powinny trafić do tej samej grupy przy losowaniu grup.</p>
+        <div class="constraint-row">
+          <select id="groupConstraintA"></select>
+          <span class="constraint-vs">nie w grupie z</span>
+          <select id="groupConstraintB"></select>
+          <button id="addGroupConstraintBtn" class="icon-btn" title="Dodaj regułę">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+          </button>
+        </div>
+        <ul class="constraint-list" id="groupConstraintList"></ul>
 
         <h3>Stałe miejsca</h3>
         <p class="hint">Przypisz ucznia na sztywno do konkretnego stolika (numery widoczne na pustych stolikach na planie) — losowanie zawsze go tam posadzi.</p>

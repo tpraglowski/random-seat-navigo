@@ -63,9 +63,22 @@ const personView = document.getElementById("personView");
 const groupsView = document.getElementById("groupsView");
 const groupsHint = document.getElementById("groupsHint");
 const groupsGrid = document.getElementById("groupsGrid");
+const groupModeTabs = document.getElementById("groupModeTabs");
+const groupModeTabPill = document.getElementById("groupModeTabPill");
+const groupCountRow = document.getElementById("groupCountRow");
 const groupCountInput = document.getElementById("groupCountInput");
 const groupCountMinus = document.getElementById("groupCountMinus");
 const groupCountPlus = document.getElementById("groupCountPlus");
+const groupSizeRow = document.getElementById("groupSizeRow");
+const groupSizeInput = document.getElementById("groupSizeInput");
+const groupSizeMinus = document.getElementById("groupSizeMinus");
+const groupSizePlus = document.getElementById("groupSizePlus");
+const showGroupsOnBoardBtn = document.getElementById("showGroupsOnBoardBtn");
+const clearGroupColorsBtn = document.getElementById("clearGroupColorsBtn");
+const groupConstraintA = document.getElementById("groupConstraintA");
+const groupConstraintB = document.getElementById("groupConstraintB");
+const addGroupConstraintBtn = document.getElementById("addGroupConstraintBtn");
+const groupConstraintList = document.getElementById("groupConstraintList");
 const personPickText = document.getElementById("personPickText");
 const losujLabel = document.getElementById("losujLabel");
 const timerBtn = document.getElementById("timerBtn");
@@ -175,7 +188,18 @@ function neighborsOf(deskId) {
 }
 
 function makeClass() {
-  return { names: "", blocked: [], assignment: {}, constraints: [], fixedSeats: [], pickHistory: [], groupCount: 4 };
+  return {
+    names: "",
+    blocked: [],
+    assignment: {},
+    constraints: [],
+    fixedSeats: [],
+    pickHistory: [],
+    groupCount: 4,
+    groupSize: 3,
+    groupMode: "count",
+    groupConstraints: [],
+  };
 }
 
 function defaultClasses() {
@@ -256,6 +280,12 @@ function renderBoard() {
   const cls = currentClass();
   board.innerHTML = "";
 
+  clearGroupColorsBtn.classList.toggle("hidden", !showGroupColorsOnBoard);
+  const groupOfName = {};
+  if (showGroupColorsOnBoard && lastGroups) {
+    lastGroups.forEach((names, gi) => names.forEach((name) => (groupOfName[name] = gi)));
+  }
+
   DESK_LAYOUT.forEach((cluster) => {
     const clusterEl = document.createElement("div");
     clusterEl.className = "cluster";
@@ -300,6 +330,9 @@ function renderBoard() {
       } else if (cls.assignment[deskId]) {
         desk.classList.add("filled");
         label = cls.assignment[deskId];
+        if (groupOfName[label] !== undefined) {
+          desk.style.setProperty("--seat-fill", GROUP_COLORS[groupOfName[label] % GROUP_COLORS.length]);
+        }
       } else {
         desk.classList.add("empty");
         label = String(CLUSTER_NUMBER[cluster.id]);
@@ -369,6 +402,8 @@ function renderConstraintOptions() {
   constraintA.innerHTML = options;
   constraintB.innerHTML = options;
   fixedSeatName.innerHTML = options;
+  groupConstraintA.innerHTML = options;
+  groupConstraintB.innerHTML = options;
 }
 
 function renderFixedSeatDeskOptions() {
@@ -419,11 +454,32 @@ function renderConstraintList() {
   });
 }
 
+function renderGroupConstraintList() {
+  const cls = currentClass();
+  if (!cls.groupConstraints.length) {
+    groupConstraintList.innerHTML = `<li class="constraint-empty" style="list-style:none">Brak reguł.</li>`;
+    return;
+  }
+  groupConstraintList.innerHTML = cls.groupConstraints
+    .map(
+      (pair, i) =>
+        `<li><span>${escapeHtml(pair.a)} ↔ ${escapeHtml(pair.b)}</span><button data-idx="${i}" title="Usuń regułę"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button></li>`
+    )
+    .join("");
+  groupConstraintList.querySelectorAll("button[data-idx]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      cls.groupConstraints.splice(Number(btn.dataset.idx), 1);
+      saveClasses(true);
+      renderGroupConstraintList();
+    });
+  });
+}
+
 function renderMain() {
   renderClassSelect();
   renderClassSummary();
   renderBoard();
-  if (currentMode === "groups") renderGroupCountInput();
+  if (currentMode === "groups") renderGroupControls();
 }
 
 // ---------- Mode switch: seating chart vs. picking one person ----------
@@ -441,6 +497,7 @@ function moveAllPills() {
   movePill(speedTabs, speedTabPill);
   movePill(priorityTabs, priorityTabPill);
   movePill(effectsTabs, effectsTabPill);
+  movePill(groupModeTabs, groupModeTabPill);
 }
 
 function applyMode() {
@@ -459,12 +516,20 @@ function applyMode() {
   losujLabel.textContent = isPerson ? "Losuj osobę" : isGroups ? "Losuj grupy" : "Losuj miejsca";
   movePill(modeTabs, modeTabPill);
   if (isSeats) fitBoardToContainer();
-  if (isGroups) renderGroupCountInput();
+  if (isGroups) renderGroupControls();
 }
 
-function renderGroupCountInput() {
+function renderGroupControls() {
   const cls = state.classes && currentClassName ? state.classes[currentClassName] : null;
+  const mode = cls ? cls.groupMode : "count";
+  groupModeTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.groupMode === mode);
+  });
+  movePill(groupModeTabs, groupModeTabPill);
+  groupCountRow.classList.toggle("hidden", mode !== "count");
+  groupSizeRow.classList.toggle("hidden", mode !== "size");
   groupCountInput.value = cls ? cls.groupCount : 4;
+  groupSizeInput.value = cls ? cls.groupSize : 3;
 }
 
 window.addEventListener("resize", moveAllPills);
@@ -818,6 +883,19 @@ function pickPerson() {
 
 // ---------- Group-drawing mode ----------
 
+// A fixed, vivid palette (not theme-reactive) so groups stay visually
+// distinct from each other and from the app's own accent color.
+const GROUP_COLORS = [
+  "#2e86de", "#e67e22", "#8e44ad", "#16a085", "#c0392b",
+  "#27ae60", "#2980b9", "#d35400", "#7f5af0", "#cc3366",
+];
+
+// Which group (index) the current class's last drawn groups put each name
+// in, kept only in memory (not synced) — powers "show groups on the seating
+// plan" and is cleared whenever the class changes.
+let lastGroups = null;
+let showGroupColorsOnBoard = false;
+
 function setGroupCount(n) {
   const clamped = Math.max(2, Math.min(12, Number(n) || 4));
   currentClass().groupCount = clamped;
@@ -825,14 +903,58 @@ function setGroupCount(n) {
   saveClasses();
 }
 
+function setGroupSize(n) {
+  const clamped = Math.max(2, Math.min(10, Number(n) || 3));
+  currentClass().groupSize = clamped;
+  groupSizeInput.value = clamped;
+  saveClasses();
+}
+
 groupCountInput.addEventListener("change", () => setGroupCount(groupCountInput.value));
 groupCountMinus.addEventListener("click", () => setGroupCount(currentClass().groupCount - 1));
 groupCountPlus.addEventListener("click", () => setGroupCount(currentClass().groupCount + 1));
+
+groupSizeInput.addEventListener("change", () => setGroupSize(groupSizeInput.value));
+groupSizeMinus.addEventListener("click", () => setGroupSize(currentClass().groupSize - 1));
+groupSizePlus.addEventListener("click", () => setGroupSize(currentClass().groupSize + 1));
+
+groupModeTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    currentClass().groupMode = btn.dataset.groupMode;
+    saveClasses();
+    renderGroupControls();
+  });
+});
+
+// Number of groups to split into, from whichever control ("liczba grup" or
+// "osób w grupie") is active — always at least 1 and never more than there
+// are people, so a tiny class never ends up with empty groups.
+function computeGroupCount(cls, n) {
+  if (cls.groupMode === "size") {
+    const size = Math.max(1, cls.groupSize || 3);
+    return Math.max(1, Math.min(n, Math.ceil(n / size)));
+  }
+  return Math.max(1, Math.min(cls.groupCount || 4, n));
+}
+
+function countGroupViolations(groups, constraints) {
+  const groupOf = {};
+  groups.forEach((names, gi) => names.forEach((name) => (groupOf[name] = gi)));
+  let violations = 0;
+  for (const { a, b } of constraints) {
+    if (groupOf[a] !== undefined && groupOf[a] === groupOf[b]) violations++;
+  }
+  return violations;
+}
 
 function resetGroupsView() {
   groupsHint.classList.remove("hidden");
   groupsGrid.classList.add("hidden");
   groupsGrid.innerHTML = "";
+  lastGroups = null;
+  showGroupColorsOnBoard = false;
+  showGroupsOnBoardBtn.classList.add("hidden");
+  clearGroupColorsBtn.classList.add("hidden");
 }
 
 function shuffleGroups() {
@@ -844,17 +966,41 @@ function shuffleGroups() {
     return;
   }
 
-  const groupCount = Math.max(1, Math.min(cls.groupCount, names.length));
-  const shuffled = shuffleArray(names);
-  const groups = Array.from({ length: groupCount }, () => []);
-  shuffled.forEach((name, i) => groups[i % groupCount].push(name));
+  // Round-robin dealing of a shuffled name list keeps every group's size
+  // within 1 of every other's no matter how many groups there are — that
+  // alone gives an even split "for free". Repeated attempts vary who ends
+  // up together, so we can still pick the draw with fewest broken "not
+  // together" rules, same approach as the seating shuffle.
+  const groupCount = computeGroupCount(cls, names.length);
+  const attempts = 300;
+  let best = null;
+  let bestViolations = Infinity;
 
-  animateGroups(groups);
+  for (let i = 0; i < attempts && bestViolations > 0; i++) {
+    const shuffled = shuffleArray(names);
+    const groups = Array.from({ length: groupCount }, () => []);
+    shuffled.forEach((name, idx) => groups[idx % groupCount].push(name));
+    const violations = countGroupViolations(groups, cls.groupConstraints);
+    if (violations < bestViolations) {
+      bestViolations = violations;
+      best = groups;
+    }
+  }
+
+  lastGroups = best;
+  animateGroups(best, () => {
+    showGroupsOnBoardBtn.classList.remove("hidden");
+    if (bestViolations > 0) {
+      alert(
+        `Nie udało się spełnić ${bestViolations} ${bestViolations === 1 ? "kryterium" : "kryteriów"} grup przy tym podziale. Spróbuj wylosować ponownie.`
+      );
+    }
+  });
 }
 
 // Cards appear table-by-table like the seating shuffle, and names inside each
 // card drop in one after another using the same drop-in-final keyframes.
-function animateGroups(groups) {
+function animateGroups(groups, onDone) {
   shuffleBtn.disabled = true;
   groupsHint.classList.add("hidden");
   groupsGrid.classList.remove("hidden");
@@ -866,6 +1012,7 @@ function animateGroups(groups) {
   groups.forEach((names, gi) => {
     const card = document.createElement("div");
     card.className = "group-card";
+    card.style.setProperty("--group-color", GROUP_COLORS[gi % GROUP_COLORS.length]);
     card.innerHTML = `<h4>Grupa ${gi + 1}</h4><ul class="group-chip-list"></ul>`;
     groupsGrid.appendChild(card);
     const list = card.querySelector(".group-chip-list");
@@ -886,8 +1033,23 @@ function animateGroups(groups) {
 
   setTimeout(() => {
     shuffleBtn.disabled = false;
+    if (onDone) onDone();
   }, maxDelay + 400);
 }
+
+// ---------- Show last drawn groups as colors on the seating plan ----------
+
+showGroupsOnBoardBtn.addEventListener("click", () => {
+  if (!lastGroups) return;
+  showGroupColorsOnBoard = true;
+  setMode("seats");
+  renderBoard();
+});
+
+clearGroupColorsBtn.addEventListener("click", () => {
+  showGroupColorsOnBoard = false;
+  renderBoard();
+});
 
 function renderModalContents() {
   const cls = currentClass();
@@ -896,6 +1058,7 @@ function renderModalContents() {
   nameCount.textContent = `${getNames(cls.names).length} ${getNames(cls.names).length === 1 ? "uczeń" : "uczniów"}`;
   renderConstraintOptions();
   renderConstraintList();
+  renderGroupConstraintList();
   renderFixedSeatDeskOptions();
   renderFixedSeatList();
 }
@@ -1314,6 +1477,20 @@ addConstraintBtn.addEventListener("click", () => {
   renderConstraintList();
 });
 
+addGroupConstraintBtn.addEventListener("click", () => {
+  const a = groupConstraintA.value;
+  const b = groupConstraintB.value;
+  if (!a || !b || a === b) return;
+  const cls = currentClass();
+  const exists = cls.groupConstraints.some(
+    (p) => (p.a === a && p.b === b) || (p.a === b && p.b === a)
+  );
+  if (exists) return;
+  cls.groupConstraints.push({ a, b });
+  saveClasses(true);
+  renderGroupConstraintList();
+});
+
 addFixedSeatBtn.addEventListener("click", () => {
   const name = fixedSeatName.value;
   const clusterId = fixedSeatDesk.value;
@@ -1358,6 +1535,9 @@ function applyRemoteClasses(classes) {
     }
     if (!cls.pickHistory) cls.pickHistory = [];
     if (!cls.groupCount) cls.groupCount = 4;
+    if (!cls.groupSize) cls.groupSize = 3;
+    if (!cls.groupMode) cls.groupMode = "count";
+    if (!cls.groupConstraints) cls.groupConstraints = [];
   }
   if (!currentClassName || !state.classes[currentClassName]) {
     currentClassName = Object.keys(state.classes)[0];

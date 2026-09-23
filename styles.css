@@ -649,6 +649,11 @@ textarea {
   --angle: 0deg;
   --rest-shift: 0px;
   --hover-shift: 0px;
+  /* Declared here (not on .desk-inner) so .filled/.blocked and an inline
+     per-desk override (group colors) can actually win — a custom property
+     set directly on .desk-inner would always shadow whatever this element
+     inherits, no matter how specific the override rule is. */
+  --seat-fill: color-mix(in srgb, var(--accent) 45%, white);
   position: absolute;
   top: 0;
   left: -37px;
@@ -674,7 +679,6 @@ textarea {
 .desk.active { z-index: 5; }
 
 .desk-inner {
-  --seat-fill: color-mix(in srgb, var(--accent) 45%, white);
   position: relative;
   width: 100%;
   height: 100%;
@@ -801,6 +805,7 @@ textarea {
 .group-card {
   background: var(--seat-bg);
   border: 1px solid var(--seat-border);
+  border-left: 4px solid var(--group-color, var(--accent));
   border-radius: 14px;
   padding: 12px 14px;
   opacity: 0;
@@ -830,8 +835,8 @@ textarea {
 }
 
 .group-chip {
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--group-color, var(--accent));
+  color: #ffffff;
   border-radius: 8px;
   padding: 7px 10px;
   font-size: 0.85rem;
