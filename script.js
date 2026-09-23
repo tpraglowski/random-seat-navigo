@@ -51,10 +51,25 @@ const speedTabs = document.getElementById("speedTabs");
 const speedTabPill = document.getElementById("speedTabPill");
 const seatsOnlySection = document.getElementById("seatsOnlySection");
 const personOnlySection = document.getElementById("personOnlySection");
+const groupsOnlySection = document.getElementById("groupsOnlySection");
 const seatsView = document.getElementById("seatsView");
 const personView = document.getElementById("personView");
+const groupsView = document.getElementById("groupsView");
+const groupsHint = document.getElementById("groupsHint");
+const groupsGrid = document.getElementById("groupsGrid");
+const groupCountInput = document.getElementById("groupCountInput");
+const groupCountMinus = document.getElementById("groupCountMinus");
+const groupCountPlus = document.getElementById("groupCountPlus");
 const personPickText = document.getElementById("personPickText");
 const losujLabel = document.getElementById("losujLabel");
+const timerBtn = document.getElementById("timerBtn");
+const timerBadge = document.getElementById("timerBadge");
+const timerPanel = document.getElementById("timerPanel");
+const timerDisplay = document.getElementById("timerDisplay");
+const timerMinus = document.getElementById("timerMinus");
+const timerPlus = document.getElementById("timerPlus");
+const timerStartBtn = document.getElementById("timerStartBtn");
+const timerResetBtn = document.getElementById("timerResetBtn");
 const appRoot = document.getElementById("appRoot");
 const accessGate = document.getElementById("accessGate");
 const accessForm = document.getElementById("accessForm");
@@ -67,6 +82,9 @@ function unlockApp() {
   accessGate.classList.add("hidden");
   appRoot.classList.remove("hidden");
   topBar.classList.remove("hidden");
+  // The mode pill was sized while top-bar was still display:none (0-width
+  // buttons), so recompute it now that the bar is actually laid out.
+  applyMode();
   init();
 }
 
@@ -91,7 +109,8 @@ const SIDEBAR_COLLAPSED_KEY = "random-seat-navigo-sidebar-collapsed";
 const MODE_KEY = "random-seat-navigo-mode";
 const PICK_COOLDOWN = 5; // a picked person sits out this many following draws
 
-let currentMode = localStorage.getItem(MODE_KEY) === "person" ? "person" : "seats";
+const storedMode = localStorage.getItem(MODE_KEY);
+let currentMode = storedMode === "person" || storedMode === "groups" ? storedMode : "seats";
 
 function capitalizeWords(text) {
   return text.replace(/(^|\s)(\p{L})/gu, (m, pre, letter) => pre + letter.toLocaleUpperCase("pl"));
@@ -134,7 +153,7 @@ function neighborsOf(deskId) {
 }
 
 function makeClass() {
-  return { names: "", blocked: [], assignment: {}, constraints: [], fixedSeats: [], pickHistory: [] };
+  return { names: "", blocked: [], assignment: {}, constraints: [], fixedSeats: [], pickHistory: [], groupCount: 4 };
 }
 
 function defaultClasses() {
@@ -194,6 +213,7 @@ function setCurrentClass(name) {
   } catch {
     // ignore
   }
+  resetGroupsView();
 }
 
 // ---------- Rendering ----------
@@ -381,6 +401,7 @@ function renderMain() {
   renderClassSelect();
   renderClassSummary();
   renderBoard();
+  if (currentMode === "groups") renderGroupCountInput();
 }
 
 // ---------- Mode switch: seating chart vs. picking one person ----------
@@ -400,16 +421,26 @@ function moveAllPills() {
 
 function applyMode() {
   const isPerson = currentMode === "person";
+  const isGroups = currentMode === "groups";
+  const isSeats = !isPerson && !isGroups;
   modeTabs.querySelectorAll(".mode-tab").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.mode === currentMode);
   });
-  seatsOnlySection.classList.toggle("hidden", isPerson);
+  seatsOnlySection.classList.toggle("hidden", !isSeats);
   personOnlySection.classList.toggle("hidden", !isPerson);
-  seatsView.classList.toggle("hidden", isPerson);
+  groupsOnlySection.classList.toggle("hidden", !isGroups);
+  seatsView.classList.toggle("hidden", !isSeats);
   personView.classList.toggle("hidden", !isPerson);
-  losujLabel.textContent = isPerson ? "Losuj osobę" : "Losuj miejsca";
+  groupsView.classList.toggle("hidden", !isGroups);
+  losujLabel.textContent = isPerson ? "Losuj osobę" : isGroups ? "Losuj grupy" : "Losuj miejsca";
   movePill(modeTabs, modeTabPill);
-  if (!isPerson) fitBoardToContainer();
+  if (isSeats) fitBoardToContainer();
+  if (isGroups) renderGroupCountInput();
+}
+
+function renderGroupCountInput() {
+  const cls = state.classes && currentClassName ? state.classes[currentClassName] : null;
+  groupCountInput.value = cls ? cls.groupCount : 4;
 }
 
 window.addEventListener("resize", moveAllPills);
@@ -487,7 +518,10 @@ settingsBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   const willOpen = settingsPanel.classList.contains("hidden");
   settingsPanel.classList.toggle("hidden");
-  if (willOpen) moveAllPills();
+  if (willOpen) {
+    moveAllPills();
+    timerPanel.classList.add("hidden");
+  }
 });
 
 document.addEventListener("click", (e) => {
@@ -498,6 +532,125 @@ document.addEventListener("click", (e) => {
 
 applyTheme();
 applySpeed();
+
+// ---------- Timer (minutnik) ----------
+
+const TIMER_DEFAULT_SECS = 5 * 60;
+const TIMER_MAX_SECS = 90 * 60;
+
+let timerTotal = TIMER_DEFAULT_SECS;
+let timerRemaining = TIMER_DEFAULT_SECS;
+let timerRunning = false;
+let timerInterval = null;
+let timerEndAt = null;
+
+function formatTime(secs) {
+  const m = Math.floor(secs / 60).toString().padStart(2, "0");
+  const s = Math.floor(secs % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}
+
+function renderTimer() {
+  timerDisplay.textContent = formatTime(timerRemaining);
+  timerStartBtn.textContent = timerRunning ? "Pauza" : "Start";
+  timerPanel.querySelectorAll(".timer-presets button, .timer-adjust button").forEach((btn) => {
+    btn.disabled = timerRunning;
+  });
+  if (timerRunning || timerRemaining !== timerTotal) {
+    timerBadge.textContent = formatTime(timerRemaining);
+    timerBadge.classList.remove("hidden");
+  } else {
+    timerBadge.classList.add("hidden");
+  }
+}
+
+function setTimerSeconds(secs) {
+  if (timerRunning) return;
+  timerTotal = Math.max(0, Math.min(TIMER_MAX_SECS, secs));
+  timerRemaining = timerTotal;
+  renderTimer();
+}
+
+function playTimerBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    [0, 0.3, 0.6].forEach((offset) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.0001, now + offset);
+      gain.gain.exponentialRampToValueAtTime(0.3, now + offset + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.25);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.3);
+    });
+  } catch {
+    // ignore — audio not available (e.g. autoplay policy)
+  }
+}
+
+function stopTimerInterval() {
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+function startPauseTimer() {
+  if (timerRunning) {
+    timerRunning = false;
+    stopTimerInterval();
+    renderTimer();
+    return;
+  }
+  if (timerRemaining <= 0) return;
+  timerRunning = true;
+  timerEndAt = Date.now() + timerRemaining * 1000;
+  timerInterval = setInterval(() => {
+    timerRemaining = Math.max(0, Math.round((timerEndAt - Date.now()) / 1000));
+    renderTimer();
+    if (timerRemaining <= 0) {
+      timerRunning = false;
+      stopTimerInterval();
+      renderTimer();
+      timerBtn.classList.add("timer-ringing");
+      setTimeout(() => timerBtn.classList.remove("timer-ringing"), 2600);
+      playTimerBeep();
+    }
+  }, 250);
+  renderTimer();
+}
+
+function resetTimer() {
+  timerRunning = false;
+  stopTimerInterval();
+  timerRemaining = timerTotal;
+  renderTimer();
+}
+
+timerPanel.querySelectorAll(".timer-presets button").forEach((btn) => {
+  btn.addEventListener("click", () => setTimerSeconds(Number(btn.dataset.secs)));
+});
+timerMinus.addEventListener("click", () => setTimerSeconds(timerTotal - 60));
+timerPlus.addEventListener("click", () => setTimerSeconds(timerTotal + 60));
+timerStartBtn.addEventListener("click", startPauseTimer);
+timerResetBtn.addEventListener("click", resetTimer);
+
+timerBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const willOpen = timerPanel.classList.contains("hidden");
+  timerPanel.classList.toggle("hidden");
+  if (willOpen) settingsPanel.classList.add("hidden");
+});
+
+document.addEventListener("click", (e) => {
+  if (!timerPanel.classList.contains("hidden") && !e.target.closest(".timer-wrap")) {
+    timerPanel.classList.add("hidden");
+  }
+});
+
+renderTimer();
 
 // ---------- Pick-one-person mode ----------
 
@@ -524,6 +677,79 @@ function pickPerson() {
     cls.pickHistory = [picked, ...(cls.pickHistory || [])].slice(0, PICK_COOLDOWN);
     saveClasses(true);
   });
+}
+
+// ---------- Group-drawing mode ----------
+
+function setGroupCount(n) {
+  const clamped = Math.max(2, Math.min(12, Number(n) || 4));
+  currentClass().groupCount = clamped;
+  groupCountInput.value = clamped;
+  saveClasses();
+}
+
+groupCountInput.addEventListener("change", () => setGroupCount(groupCountInput.value));
+groupCountMinus.addEventListener("click", () => setGroupCount(currentClass().groupCount - 1));
+groupCountPlus.addEventListener("click", () => setGroupCount(currentClass().groupCount + 1));
+
+function resetGroupsView() {
+  groupsHint.classList.remove("hidden");
+  groupsGrid.classList.add("hidden");
+  groupsGrid.innerHTML = "";
+}
+
+function shuffleGroups() {
+  if (shuffleBtn.disabled) return;
+  const cls = currentClass();
+  const names = getNames(cls.names);
+  if (!names.length) {
+    alert("Brak uczniów na liście — dodaj ich w edycji klasy.");
+    return;
+  }
+
+  const groupCount = Math.max(1, Math.min(cls.groupCount, names.length));
+  const shuffled = shuffleArray(names);
+  const groups = Array.from({ length: groupCount }, () => []);
+  shuffled.forEach((name, i) => groups[i % groupCount].push(name));
+
+  animateGroups(groups);
+}
+
+// Cards appear table-by-table like the seating shuffle, and names inside each
+// card drop in one after another using the same drop-in-final keyframes.
+function animateGroups(groups) {
+  shuffleBtn.disabled = true;
+  groupsHint.classList.add("hidden");
+  groupsGrid.classList.remove("hidden");
+  groupsGrid.innerHTML = "";
+
+  const preset = SPEED_PRESETS[shuffleSpeed];
+  let maxDelay = 0;
+
+  groups.forEach((names, gi) => {
+    const card = document.createElement("div");
+    card.className = "group-card";
+    card.innerHTML = `<h4>Grupa ${gi + 1}</h4><ul class="group-chip-list"></ul>`;
+    groupsGrid.appendChild(card);
+    const list = card.querySelector(".group-chip-list");
+
+    const cardDelay = gi * preset.tableStagger;
+    setTimeout(() => card.classList.add("group-card-in"), cardDelay);
+
+    names.forEach((name, ni) => {
+      const li = document.createElement("li");
+      li.className = "group-chip";
+      li.textContent = name;
+      list.appendChild(li);
+      const delay = cardDelay + 120 + ni * preset.seatStagger;
+      maxDelay = Math.max(maxDelay, delay);
+      setTimeout(() => li.classList.add("drop-in-final"), delay);
+    });
+  });
+
+  setTimeout(() => {
+    shuffleBtn.disabled = false;
+  }, maxDelay + 400);
 }
 
 function renderModalContents() {
@@ -775,6 +1001,7 @@ namesInput.addEventListener("input", () => {
 
 shuffleBtn.addEventListener("click", () => {
   if (currentMode === "person") pickPerson();
+  else if (currentMode === "groups") shuffleGroups();
   else shuffleSeats();
 });
 
@@ -906,6 +1133,7 @@ function applyRemoteClasses(classes) {
       );
     }
     if (!cls.pickHistory) cls.pickHistory = [];
+    if (!cls.groupCount) cls.groupCount = 4;
   }
   if (!currentClassName || !state.classes[currentClassName]) {
     currentClassName = Object.keys(state.classes)[0];

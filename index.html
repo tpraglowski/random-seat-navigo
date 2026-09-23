@@ -34,6 +34,37 @@
       <span class="mode-tab-pill" id="modeTabPill"></span>
       <button class="mode-tab active" data-mode="seats" type="button">Losowanie miejsc</button>
       <button class="mode-tab" data-mode="person" type="button">Losowanie osoby</button>
+      <button class="mode-tab" data-mode="groups" type="button">Losowanie grup</button>
+    </div>
+
+    <div class="timer-wrap">
+      <button class="timer-btn icon-btn" id="timerBtn" title="Minutnik" type="button">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="13" r="8" />
+          <path d="M12 9v4l3 2" />
+          <path d="M9 2h6" />
+        </svg>
+        <span class="timer-badge hidden" id="timerBadge">00:00</span>
+      </button>
+
+      <div class="timer-panel hidden" id="timerPanel">
+        <h3>Minutnik</h3>
+        <div class="timer-display" id="timerDisplay">05:00</div>
+        <div class="timer-presets">
+          <button type="button" data-secs="60">1 min</button>
+          <button type="button" data-secs="180">3 min</button>
+          <button type="button" data-secs="300">5 min</button>
+          <button type="button" data-secs="600">10 min</button>
+        </div>
+        <div class="timer-adjust">
+          <button type="button" id="timerMinus">−1 min</button>
+          <button type="button" id="timerPlus">+1 min</button>
+        </div>
+        <div class="timer-actions">
+          <button type="button" class="primary-btn" id="timerStartBtn">Start</button>
+          <button type="button" class="ghost-btn" id="timerResetBtn">Reset</button>
+        </div>
+      </div>
     </div>
 
     <div class="settings-wrap">
@@ -108,6 +139,16 @@
           <p class="hint">Wylosowana osoba nie pojawi się ponownie przez kolejne 5 losowań.</p>
         </div>
 
+        <div id="groupsOnlySection" class="hidden">
+          <h2>Grupy</h2>
+          <p class="hint">Podziel klasę losowo na grupy.</p>
+          <div class="class-row">
+            <button id="groupCountMinus" class="icon-btn" title="Mniej grup">−</button>
+            <input type="number" id="groupCountInput" min="2" max="12" value="4" />
+            <button id="groupCountPlus" class="icon-btn" title="Więcej grup">+</button>
+          </div>
+        </div>
+
         <p class="sync-status" id="syncStatus"></p>
       </div>
 
@@ -137,6 +178,14 @@
         <div class="board-front">LOSOWANIE OSOBY</div>
         <div class="person-pick-card">
           <span class="person-pick-text" id="personPickText">Kliknij „Losuj”</span>
+        </div>
+      </div>
+
+      <div class="board-wrap hidden" id="groupsView">
+        <div class="board-front">LOSOWANIE GRUP</div>
+        <div class="groups-scroll">
+          <p class="hint groups-hint" id="groupsHint">Kliknij „Losuj”, aby podzielić klasę na grupy.</p>
+          <div class="groups-grid hidden" id="groupsGrid"></div>
         </div>
       </div>
     </main>
