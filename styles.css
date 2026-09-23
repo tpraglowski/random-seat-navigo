@@ -14,6 +14,22 @@
   color-scheme: light;
 }
 
+:root[data-theme="dark"] {
+  --bg: #10140f;
+  --panel: #1a221b;
+  --ink: #eafbf0;
+  --muted: #93ac9b;
+  --border: #2b3a2c;
+  --accent: #2fbf62;
+  --accent-ink: #0b1a0f;
+  --seat-bg: #24312a;
+  --seat-border: #3a4f3d;
+  --seat-blocked: #232a25;
+  --seat-blocked-border: #37413a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; }
 
 .hidden { display: none !important; }
@@ -160,11 +176,18 @@ body {
 
 .full-btn { width: 100%; margin-top: 6px; }
 
-.mode-tabs {
+.top-bar {
   position: fixed;
   top: 16px;
   right: 16px;
   z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mode-tabs {
+  position: relative;
   display: flex;
   gap: 4px;
   background: var(--panel);
@@ -205,11 +228,48 @@ body {
 
 .mode-tab:hover:not(.active) { color: var(--ink); }
 
+.settings-wrap { position: relative; }
+
+.settings-btn {
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  border-color: var(--border);
+  width: 44px;
+  height: 44px;
+}
+
+.settings-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+.settings-panel h3 {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.settings-panel h3:not(:first-child) { margin-top: 14px; }
+
+.sub-tabs { width: 100%; background: var(--seat-bg); box-shadow: none; }
+.sub-tabs .mode-tab { padding: 7px 10px; font-size: 0.75rem; }
+.sub-tabs .mode-tab:not(.active) { color: var(--ink); }
+
 @media (max-width: 520px) {
   /* Narrow header can't fit the tabs beside the logo without covering the
      sidebar's own collapse button — sit just under the header row instead. */
-  .mode-tabs { top: 62px; right: 8px; }
+  .top-bar { top: 62px; right: 8px; }
   .mode-tab { font-size: 0.68rem; padding: 7px 8px; }
+  .settings-btn { width: 38px; height: 38px; }
 }
 
 .person-pick-wrap {

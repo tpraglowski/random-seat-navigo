@@ -29,10 +29,37 @@
     </form>
   </div>
 
-  <div class="mode-tabs hidden" id="modeTabs">
-    <span class="mode-tab-pill" id="modeTabPill"></span>
-    <button class="mode-tab active" data-mode="seats" type="button">Losowanie miejsc</button>
-    <button class="mode-tab" data-mode="person" type="button">Losowanie osoby</button>
+  <div class="top-bar hidden" id="topBar">
+    <div class="mode-tabs" id="modeTabs">
+      <span class="mode-tab-pill" id="modeTabPill"></span>
+      <button class="mode-tab active" data-mode="seats" type="button">Losowanie miejsc</button>
+      <button class="mode-tab" data-mode="person" type="button">Losowanie osoby</button>
+    </div>
+
+    <div class="settings-wrap">
+      <button class="settings-btn icon-btn" id="settingsBtn" title="Ustawienia" type="button">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+        </svg>
+      </button>
+
+      <div class="settings-panel hidden" id="settingsPanel">
+        <h3>Tryb jasności</h3>
+        <div class="mode-tabs sub-tabs" id="themeTabs">
+          <span class="mode-tab-pill" id="themeTabPill"></span>
+          <button class="mode-tab active" data-theme="light" type="button">Jasny</button>
+          <button class="mode-tab" data-theme="dark" type="button">Ciemny</button>
+        </div>
+
+        <h3>Tryb losowania</h3>
+        <div class="mode-tabs sub-tabs" id="speedTabs">
+          <span class="mode-tab-pill" id="speedTabPill"></span>
+          <button class="mode-tab active" data-speed="long" type="button">Długie</button>
+          <button class="mode-tab" data-speed="short" type="button">Krótkie</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="app hidden" id="appRoot">

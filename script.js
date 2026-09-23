@@ -40,8 +40,15 @@ const fixedSeatList = document.getElementById("fixedSeatList");
 const syncStatus = document.getElementById("syncStatus");
 const sidebar = document.getElementById("sidebar");
 const sidebarToggle = document.getElementById("sidebarToggle");
+const topBar = document.getElementById("topBar");
 const modeTabs = document.getElementById("modeTabs");
 const modeTabPill = document.getElementById("modeTabPill");
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsPanel = document.getElementById("settingsPanel");
+const themeTabs = document.getElementById("themeTabs");
+const themeTabPill = document.getElementById("themeTabPill");
+const speedTabs = document.getElementById("speedTabs");
+const speedTabPill = document.getElementById("speedTabPill");
 const seatsOnlySection = document.getElementById("seatsOnlySection");
 const personOnlySection = document.getElementById("personOnlySection");
 const seatsView = document.getElementById("seatsView");
@@ -59,7 +66,7 @@ const ACCESS_UNLOCKED_KEY = "random-seat-navigo-unlocked";
 function unlockApp() {
   accessGate.classList.add("hidden");
   appRoot.classList.remove("hidden");
-  modeTabs.classList.remove("hidden");
+  topBar.classList.remove("hidden");
   init();
 }
 
@@ -378,11 +385,17 @@ function renderMain() {
 
 // ---------- Mode switch: seating chart vs. picking one person ----------
 
-function moveModeTabPill() {
-  const activeBtn = modeTabs.querySelector(".mode-tab.active");
+function movePill(container, pill) {
+  const activeBtn = container.querySelector(".mode-tab.active");
   if (!activeBtn) return;
-  modeTabPill.style.width = `${activeBtn.offsetWidth}px`;
-  modeTabPill.style.transform = `translateX(${activeBtn.offsetLeft - 3}px)`;
+  pill.style.width = `${activeBtn.offsetWidth}px`;
+  pill.style.transform = `translateX(${activeBtn.offsetLeft - 3}px)`;
+}
+
+function moveAllPills() {
+  movePill(modeTabs, modeTabPill);
+  movePill(themeTabs, themeTabPill);
+  movePill(speedTabs, speedTabPill);
 }
 
 function applyMode() {
@@ -395,11 +408,11 @@ function applyMode() {
   seatsView.classList.toggle("hidden", isPerson);
   personView.classList.toggle("hidden", !isPerson);
   losujLabel.textContent = isPerson ? "Losuj osobę" : "Losuj miejsca";
-  moveModeTabPill();
+  movePill(modeTabs, modeTabPill);
   if (!isPerson) fitBoardToContainer();
 }
 
-window.addEventListener("resize", moveModeTabPill);
+window.addEventListener("resize", moveAllPills);
 
 function setMode(mode) {
   currentMode = mode;
@@ -416,6 +429,75 @@ modeTabs.querySelectorAll(".mode-tab").forEach((btn) => {
 });
 
 applyMode();
+
+// ---------- Settings: theme + shuffle speed ----------
+
+const THEME_KEY = "random-seat-navigo-theme";
+const SPEED_KEY = "random-seat-navigo-speed";
+
+let currentTheme = localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
+let shuffleSpeed = localStorage.getItem(SPEED_KEY) === "short" ? "short" : "long";
+
+const SPEED_PRESETS = {
+  long: { tableStagger: 260, seatStagger: 60, spinBase: 620, spinRand: 180, tickStart: 45, tickGrowth: 1.16, pickMs: 900 },
+  short: { tableStagger: 70, seatStagger: 20, spinBase: 200, spinRand: 70, tickStart: 28, tickGrowth: 1.1, pickMs: 320 },
+};
+
+function applyTheme() {
+  if (currentTheme === "dark") document.documentElement.setAttribute("data-theme", "dark");
+  else document.documentElement.removeAttribute("data-theme");
+  themeTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.theme === currentTheme);
+  });
+  movePill(themeTabs, themeTabPill);
+}
+
+function applySpeed() {
+  speedTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.speed === shuffleSpeed);
+  });
+  movePill(speedTabs, speedTabPill);
+}
+
+themeTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    currentTheme = btn.dataset.theme;
+    try {
+      localStorage.setItem(THEME_KEY, currentTheme);
+    } catch {
+      // ignore
+    }
+    applyTheme();
+  });
+});
+
+speedTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    shuffleSpeed = btn.dataset.speed;
+    try {
+      localStorage.setItem(SPEED_KEY, shuffleSpeed);
+    } catch {
+      // ignore
+    }
+    applySpeed();
+  });
+});
+
+settingsBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const willOpen = settingsPanel.classList.contains("hidden");
+  settingsPanel.classList.toggle("hidden");
+  if (willOpen) moveAllPills();
+});
+
+document.addEventListener("click", (e) => {
+  if (!settingsPanel.classList.contains("hidden") && !e.target.closest(".settings-wrap")) {
+    settingsPanel.classList.add("hidden");
+  }
+});
+
+applyTheme();
+applySpeed();
 
 // ---------- Pick-one-person mode ----------
 
@@ -437,7 +519,7 @@ function pickPerson() {
   const picked = pool[Math.floor(Math.random() * pool.length)];
 
   shuffleBtn.disabled = true;
-  flickerToFinal(personPickText, names, picked, 900, () => {
+  flickerToFinal(personPickText, names, picked, SPEED_PRESETS[shuffleSpeed].pickMs, () => {
     shuffleBtn.disabled = false;
     cls.pickHistory = [picked, ...(cls.pickHistory || [])].slice(0, PICK_COOLDOWN);
     saveClasses(true);
@@ -564,8 +646,9 @@ function dropInText(textEl, text, isFinal) {
 }
 
 function flickerToFinal(textEl, pool, finalName, totalMs, onLanded) {
+  const preset = SPEED_PRESETS[shuffleSpeed];
   let elapsed = 0;
-  let delay = 45;
+  let delay = preset.tickStart;
   function tick() {
     if (elapsed + delay >= totalMs) {
       dropInText(textEl, finalName, true);
@@ -574,7 +657,7 @@ function flickerToFinal(textEl, pool, finalName, totalMs, onLanded) {
     }
     dropInText(textEl, pool[Math.floor(Math.random() * pool.length)], false);
     elapsed += delay;
-    delay *= 1.16; // ease out: each flip takes a little longer, like it's slowing down
+    delay *= preset.tickGrowth; // ease out: each flip takes a little longer, like it's slowing down
     setTimeout(tick, delay);
   }
   tick();
@@ -587,7 +670,8 @@ function animateShuffle(finalAssignment, onDone) {
   const deskEls = [...board.querySelectorAll(".desk")];
   const pool = Object.values(finalAssignment);
 
-  const TABLE_STAGGER = 260; // ms between one table starting and the next
+  const preset = SPEED_PRESETS[shuffleSpeed];
+  const TABLE_STAGGER = preset.tableStagger; // ms between one table starting and the next
   const clusterOrderSeen = [];
   const withinClusterIndex = {};
   deskEls.forEach((desk) => {
@@ -612,8 +696,8 @@ function animateShuffle(finalAssignment, onDone) {
     const cid = clusterIdOf(key);
     const tableStagger = clusterOrderSeen.indexOf(cid) * TABLE_STAGGER;
     const seatWithinTable = deskIdsOfClusterId(cid).indexOf(key);
-    const stagger = tableStagger + seatWithinTable * 60;
-    const spinFor = 620 + Math.random() * 180;
+    const stagger = tableStagger + seatWithinTable * preset.seatStagger;
+    const spinFor = preset.spinBase + Math.random() * preset.spinRand;
     pending++;
 
     const label = desk.querySelector(".desk-label-text");

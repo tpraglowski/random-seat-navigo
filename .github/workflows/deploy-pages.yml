@@ -31,6 +31,13 @@ jobs:
           export const ACCESS_CODE = '${ACCESS_CODE}';
           EOF
 
+          # Cache-bust the JS/CSS on every deploy — browsers cache ES module
+          # scripts very aggressively, which was leaving some visitors on a
+          # stale script.js after an update until they hard-refreshed.
+          VER="${GITHUB_SHA::8}"
+          sed -i "s/script\.js\"/script.js?v=${VER}\"/" dist/index.html
+          sed -i "s/styles\.css\"/styles.css?v=${VER}\"/" dist/index.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
