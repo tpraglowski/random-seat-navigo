@@ -80,14 +80,6 @@ accessForm.addEventListener("submit", (e) => {
   }
 });
 
-let alreadyUnlocked = false;
-try {
-  alreadyUnlocked = localStorage.getItem(ACCESS_UNLOCKED_KEY) === "1";
-} catch {
-  // ignore
-}
-if (alreadyUnlocked) unlockApp();
-
 const SIDEBAR_COLLAPSED_KEY = "random-seat-navigo-sidebar-collapsed";
 const MODE_KEY = "random-seat-navigo-mode";
 const PICK_COOLDOWN = 5; // a picked person sits out this many following draws
@@ -302,7 +294,25 @@ function renderBoard() {
 
     board.appendChild(clusterEl);
   });
+
+  fitBoardToContainer();
 }
+
+// The board is a fixed 900x560 canvas so the fan-rotation math stays exact —
+// instead of letting it overflow into a scrollbar, scale the whole thing down
+// (a transform, so nothing inside has to be recalculated) to whatever fits
+// the available space, up to its natural 1:1 size.
+function fitBoardToContainer() {
+  const scroll = board.parentElement;
+  if (!scroll) return;
+  const scale = Math.min(scroll.clientWidth / 900, scroll.clientHeight / 560, 1);
+  board.style.transform = `scale(${scale})`;
+}
+
+window.addEventListener("resize", fitBoardToContainer);
+sidebar.addEventListener("transitionend", (e) => {
+  if (e.propertyName === "width") fitBoardToContainer();
+});
 
 function renderConstraintOptions() {
   const names = getNames(namesInput.value);
@@ -386,6 +396,7 @@ function applyMode() {
   personView.classList.toggle("hidden", !isPerson);
   losujLabel.textContent = isPerson ? "Losuj osobę" : "Losuj miejsca";
   moveModeTabPill();
+  if (!isPerson) fitBoardToContainer();
 }
 
 window.addEventListener("resize", moveModeTabPill);
@@ -855,5 +866,13 @@ async function init() {
   );
 }
 
-// init() runs from unlockApp() once the access code is accepted (or right
-// away, on load, if this device already unlocked it before).
+// Runs last, once every const/let above this point has been initialized —
+// init() (called from unlockApp) reaches back up to things like `state` that
+// are declared further down the file than the gate code near the top.
+let alreadyUnlocked = false;
+try {
+  alreadyUnlocked = localStorage.getItem(ACCESS_UNLOCKED_KEY) === "1";
+} catch {
+  // ignore
+}
+if (alreadyUnlocked) unlockApp();
