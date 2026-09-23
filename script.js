@@ -54,6 +54,7 @@ const priorityTabPill = document.getElementById("priorityTabPill");
 const effectsTabs = document.getElementById("effectsTabs");
 const effectsTabPill = document.getElementById("effectsTabPill");
 const leavesLayer = document.getElementById("leavesLayer");
+const todayDate = document.getElementById("todayDate");
 const seatsOnlySection = document.getElementById("seatsOnlySection");
 const personOnlySection = document.getElementById("personOnlySection");
 const groupsOnlySection = document.getElementById("groupsOnlySection");
@@ -116,6 +117,14 @@ const PICK_COOLDOWN = 5; // a picked person sits out this many following draws
 
 const storedMode = localStorage.getItem(MODE_KEY);
 let currentMode = storedMode === "person" || storedMode === "groups" ? storedMode : "seats";
+
+const todayLabel = new Date().toLocaleDateString("pl-PL", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+todayDate.textContent = todayLabel.charAt(0).toLocaleUpperCase("pl") + todayLabel.slice(1);
 
 function capitalizeWords(text) {
   return text.replace(/(^|\s)(\p{L})/gu, (m, pre, letter) => pre + letter.toLocaleUpperCase("pl"));
@@ -550,7 +559,7 @@ function spawnLeaf() {
 function startLeaves() {
   if (leafInterval) return;
   spawnLeaf();
-  leafInterval = setInterval(spawnLeaf, 550);
+  leafInterval = setInterval(spawnLeaf, 275);
 }
 
 function stopLeaves() {

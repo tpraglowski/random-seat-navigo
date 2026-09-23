@@ -32,10 +32,14 @@
 
 :root[data-effects="on"] {
   --accent: #e8730b;
+  --ink: #b35900;
+  --muted: #c9791f;
 }
 
 :root[data-theme="dark"][data-effects="on"] {
   --accent: #ff9f40;
+  --ink: #ffd9a8;
+  --muted: #e0a860;
 }
 
 * { box-sizing: border-box; }
@@ -161,6 +165,12 @@ body {
   flex-shrink: 0;
 }
 .toggle-btn:hover { background: rgba(255, 255, 255, 0.15); }
+
+.today-date {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+}
 
 .sidebar-body {
   background: var(--seat-bg);
@@ -421,7 +431,8 @@ body {
 /* Collapsed rail */
 .sidebar.collapsed .sidebar-body,
 .sidebar.collapsed .brand-name,
-.sidebar.collapsed .losuj-label {
+.sidebar.collapsed .losuj-label,
+.sidebar.collapsed .today-date {
   display: none;
 }
 /* Icon + toggle button no longer fit side by side in the narrow rail —
