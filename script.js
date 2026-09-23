@@ -283,10 +283,7 @@ function renderBoard() {
   board.innerHTML = "";
 
   clearGroupColorsBtn.classList.toggle("hidden", !showGroupColorsOnBoard);
-  const groupOfName = {};
-  if (showGroupColorsOnBoard && lastGroups) {
-    lastGroups.forEach((names, gi) => names.forEach((name) => (groupOfName[name] = gi)));
-  }
+  const groupColorOf = currentGroupColorMap() || {};
 
   DESK_LAYOUT.forEach((cluster) => {
     const clusterEl = document.createElement("div");
@@ -332,8 +329,8 @@ function renderBoard() {
       } else if (cls.assignment[deskId]) {
         desk.classList.add("filled");
         label = cls.assignment[deskId];
-        if (groupOfName[label] !== undefined) {
-          desk.style.setProperty("--seat-fill", GROUP_COLORS[groupOfName[label] % GROUP_COLORS.length]);
+        if (groupColorOf[label]) {
+          desk.style.setProperty("--seat-fill", groupColorOf[label]);
         }
       } else {
         desk.classList.add("empty");
@@ -935,6 +932,16 @@ const GROUP_COLORS = [
 let lastGroups = null;
 let showGroupColorsOnBoard = false;
 
+// Name -> color for whichever groups are currently being shown on the
+// seating plan, or null when that overlay isn't active — shared by the
+// board render and both shuffle animations so all three agree.
+function currentGroupColorMap() {
+  if (!showGroupColorsOnBoard || !lastGroups) return null;
+  const map = {};
+  lastGroups.forEach((names, gi) => names.forEach((name) => (map[name] = GROUP_COLORS[gi % GROUP_COLORS.length])));
+  return map;
+}
+
 function setGroupCount(n) {
   const clamped = Math.max(2, Math.min(12, Number(n) || 4));
   currentClass().groupCount = clamped;
@@ -1116,16 +1123,20 @@ function arrangeGroupsOnBoard() {
   showGroupColorsOnBoard = true;
   setMode("seats");
 
-  animateShuffle(assignment, () => {
-    cls.assignment = assignment;
-    saveClasses(true);
-    renderBoard();
-    if (unseated.length) {
-      alert(
-        `${unseated.length} ${unseated.length === 1 ? "uczeń nie zmieścił się" : "uczniów nie zmieściło się"} przy stolikach — za mało miejsc, by posadzić wszystkie grupy przy osobnych stolikach.`
-      );
-    }
-  });
+  animateShuffle(
+    assignment,
+    () => {
+      cls.assignment = assignment;
+      saveClasses(true);
+      renderBoard();
+      if (unseated.length) {
+        alert(
+          `${unseated.length} ${unseated.length === 1 ? "uczeń nie zmieścił się" : "uczniów nie zmieściło się"} przy stolikach — za mało miejsc, by posadzić wszystkie grupy przy osobnych stolikach.`
+        );
+      }
+    },
+    currentGroupColorMap()
+  );
 }
 
 showGroupsOnBoardBtn.addEventListener("click", () => {
@@ -1313,24 +1324,28 @@ function shuffleSeats() {
     }
   }
 
-  animateShuffle(best, () => {
-    cls.assignment = best;
-    saveClasses(true);
-    renderBoard();
+  animateShuffle(
+    best,
+    () => {
+      cls.assignment = best;
+      saveClasses(true);
+      renderBoard();
 
-    const messages = [];
-    if (names.length > availableSeats.length) {
-      messages.push(
-        `${names.length - availableSeats.length} uczniów zostało bez miejsca (za mało dostępnych miejsc).`
-      );
-    }
-    if (bestViolations > 0) {
-      messages.push(
-        `Nie udało się spełnić ${bestViolations} ${bestViolations === 1 ? "reguły" : "reguł"} rozsadzenia przy tym układzie sali. Spróbuj wylosować ponownie albo zwiększ salę.`
-      );
-    }
-    if (messages.length) alert(messages.join("\n"));
-  });
+      const messages = [];
+      if (names.length > availableSeats.length) {
+        messages.push(
+          `${names.length - availableSeats.length} uczniów zostało bez miejsca (za mało dostępnych miejsc).`
+        );
+      }
+      if (bestViolations > 0) {
+        messages.push(
+          `Nie udało się spełnić ${bestViolations} ${bestViolations === 1 ? "reguły" : "reguł"} rozsadzenia przy tym układzie sali. Spróbuj wylosować ponownie albo zwiększ salę.`
+        );
+      }
+      if (messages.length) alert(messages.join("\n"));
+    },
+    currentGroupColorMap()
+  );
 }
 
 // Slot-machine style reveal, table by table: every desk within one cluster
@@ -1345,17 +1360,20 @@ function dropInText(textEl, text, isFinal) {
   textEl.classList.add(isFinal ? "drop-in-final" : "drop-in");
 }
 
-function flickerToFinal(textEl, pool, finalName, totalMs, onLanded) {
+function flickerToFinal(textEl, pool, finalName, totalMs, onLanded, colorFn) {
   const preset = SPEED_PRESETS[shuffleSpeed];
   let elapsed = 0;
   let delay = preset.tickStart;
   function tick() {
     if (elapsed + delay >= totalMs) {
       dropInText(textEl, finalName, true);
+      if (colorFn) colorFn(finalName);
       onLanded();
       return;
     }
-    dropInText(textEl, pool[Math.floor(Math.random() * pool.length)], false);
+    const candidate = pool[Math.floor(Math.random() * pool.length)];
+    dropInText(textEl, candidate, false);
+    if (colorFn) colorFn(candidate);
     elapsed += delay;
     delay *= preset.tickGrowth; // ease out: each flip takes a little longer, like it's slowing down
     setTimeout(tick, delay);
@@ -1363,7 +1381,7 @@ function flickerToFinal(textEl, pool, finalName, totalMs, onLanded) {
   tick();
 }
 
-function animateShuffle(finalAssignment, onDone) {
+function animateShuffle(finalAssignment, onDone, groupColorOf) {
   if (shuffleBtn.disabled) return;
   shuffleBtn.disabled = true;
 
@@ -1401,24 +1419,41 @@ function animateShuffle(finalAssignment, onDone) {
     pending++;
 
     const label = desk.querySelector(".desk-label-text");
+    // While spinning, tint the desk to match whichever candidate name is
+    // currently showing (not just the final one) so the color flickers along
+    // with the text instead of snapping in only once the render settles.
+    const colorFn = groupColorOf
+      ? (candidate) => {
+          const color = groupColorOf[candidate];
+          if (color) desk.style.setProperty("--seat-fill", color);
+          else desk.style.removeProperty("--seat-fill");
+        }
+      : null;
 
     setTimeout(() => {
       desk.classList.remove("empty");
       desk.classList.add("filled", "shuffling"); // vivid color while spinning either way
 
-      flickerToFinal(label, pool, finalLabel, spinFor, () => {
-        desk.classList.remove("shuffling");
-        if (!isFilled) {
-          desk.classList.remove("filled");
-          desk.classList.add("empty");
-        }
-        desk.classList.add("landed");
-        setTimeout(() => desk.classList.remove("landed"), 420);
-        if (--pending === 0) {
-          shuffleBtn.disabled = false;
-          onDone();
-        }
-      });
+      flickerToFinal(
+        label,
+        pool,
+        finalLabel,
+        spinFor,
+        () => {
+          desk.classList.remove("shuffling");
+          if (!isFilled) {
+            desk.classList.remove("filled");
+            desk.classList.add("empty");
+          }
+          desk.classList.add("landed");
+          setTimeout(() => desk.classList.remove("landed"), 420);
+          if (--pending === 0) {
+            shuffleBtn.disabled = false;
+            onDone();
+          }
+        },
+        colorFn
+      );
     }, stagger);
   });
 
