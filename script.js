@@ -136,13 +136,20 @@ const PICK_COOLDOWN = 5; // a picked person sits out this many following draws
 const storedMode = localStorage.getItem(MODE_KEY);
 let currentMode = storedMode === "person" || storedMode === "groups" ? storedMode : "seats";
 
-const todayLabel = new Date().toLocaleDateString("pl-PL", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
-todayDate.textContent = todayLabel.charAt(0).toLocaleUpperCase("pl") + todayLabel.slice(1);
+// Refreshed on an interval (not just once at load) so the date rolls over
+// to the next day on its own in a tab left open overnight, without needing
+// a page reload.
+function renderTodayDate() {
+  const label = new Date().toLocaleDateString("pl-PL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  todayDate.textContent = label.charAt(0).toLocaleUpperCase("pl") + label.slice(1);
+}
+renderTodayDate();
+setInterval(renderTodayDate, 60 * 1000);
 
 function capitalizeWords(text) {
   return text.replace(/(^|\s)(\p{L})/gu, (m, pre, letter) => pre + letter.toLocaleUpperCase("pl"));
