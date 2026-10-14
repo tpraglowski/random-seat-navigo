@@ -1727,7 +1727,52 @@ async function init() {
 const RACCOON_ANIMATION_MS = 3800;
 let spaceAnimationPlaying = false;
 
+let raccoonAudioCtx = null;
+
+// Synthesized "shhhh": white noise through a band-pass whose center drifts up
+// a little, with a soft swell in and fade out. Starts when the paw reaches
+// the raccoon's mouth and is over before the paw comes back down.
+function playShhSound(delayMs) {
+  try {
+    raccoonAudioCtx = raccoonAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = raccoonAudioCtx;
+    if (ctx.state === "suspended") ctx.resume();
+
+    const dur = 1.7;
+    const start = ctx.currentTime + delayMs / 1000;
+    const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+
+    const high = ctx.createBiquadFilter();
+    high.type = "highpass";
+    high.frequency.value = 1800;
+
+    const band = ctx.createBiquadFilter();
+    band.type = "bandpass";
+    band.Q.value = 0.7;
+    band.frequency.setValueAtTime(3200, start);
+    band.frequency.linearRampToValueAtTime(4800, start + dur);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.4, start + 0.3);
+    gain.gain.setValueAtTime(0.4, start + dur - 0.6);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+
+    src.connect(high).connect(band).connect(gain).connect(ctx.destination);
+    src.start(start);
+    src.stop(start + dur);
+  } catch {
+    // ignore — audio not available
+  }
+}
+
 function playRaccoonShh() {
+  playShhSound(1050);
   raccoonPeek.style.left = `${15 + Math.random() * 70}%`;
   raccoonPeek.classList.remove("playing");
   void raccoonPeek.offsetWidth; // restart the CSS animation from the top
