@@ -1729,46 +1729,70 @@ let spaceAnimationPlaying = false;
 
 let raccoonAudioCtx = null;
 
-// Synthesized "shhhh": white noise through a band-pass whose center drifts up
-// a little, with a soft swell in and fade out. Starts when the paw reaches
-// the raccoon's mouth and is over before the paw comes back down.
-function playShhSound(delayMs) {
+// Browsers keep an AudioContext suspended until the page has had a user
+// gesture, and a context created/resumed only moments before a *scheduled*
+// sound can stay silent — so create and resume it on the very first click or
+// key press anywhere, well before the raccoon ever needs it.
+function unlockRaccoonAudio() {
   try {
     raccoonAudioCtx = raccoonAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = raccoonAudioCtx;
-    if (ctx.state === "suspended") ctx.resume();
-
-    const dur = 1.7;
-    const start = ctx.currentTime + delayMs / 1000;
-    const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-
-    const src = ctx.createBufferSource();
-    src.buffer = buffer;
-
-    const high = ctx.createBiquadFilter();
-    high.type = "highpass";
-    high.frequency.value = 1800;
-
-    const band = ctx.createBiquadFilter();
-    band.type = "bandpass";
-    band.Q.value = 0.7;
-    band.frequency.setValueAtTime(3200, start);
-    band.frequency.linearRampToValueAtTime(4800, start + dur);
-
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(0.4, start + 0.3);
-    gain.gain.setValueAtTime(0.4, start + dur - 0.6);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-
-    src.connect(high).connect(band).connect(gain).connect(ctx.destination);
-    src.start(start);
-    src.stop(start + dur);
-  } catch {
-    // ignore — audio not available
+    if (raccoonAudioCtx.state !== "running") raccoonAudioCtx.resume();
+  } catch (err) {
+    console.warn("Audio unavailable:", err);
   }
+}
+["pointerdown", "keydown"].forEach((type) =>
+  document.addEventListener(type, unlockRaccoonAudio, { capture: true, passive: true })
+);
+
+// Synthesized "shhhh": white noise through a band-pass whose center drifts up
+// a little, with a soft swell in and fade out. Started via setTimeout (not a
+// context-time schedule) once the paw reaches the raccoon's mouth, and over
+// before the paw comes back down.
+function playShhSound(delayMs) {
+  unlockRaccoonAudio();
+  setTimeout(async () => {
+    try {
+      const ctx = raccoonAudioCtx;
+      if (!ctx) return;
+      if (ctx.state !== "running") await ctx.resume();
+      if (ctx.state !== "running") {
+        console.warn("Raccoon sound skipped — AudioContext is", ctx.state);
+        return;
+      }
+
+      const dur = 1.7;
+      const now = ctx.currentTime;
+      const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+
+      const high = ctx.createBiquadFilter();
+      high.type = "highpass";
+      high.frequency.value = 1800;
+
+      const band = ctx.createBiquadFilter();
+      band.type = "bandpass";
+      band.Q.value = 0.6;
+      band.frequency.setValueAtTime(3200, now);
+      band.frequency.linearRampToValueAtTime(4800, now + dur);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.6, now + 0.3);
+      gain.gain.setValueAtTime(0.6, now + dur - 0.6);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+      src.connect(high).connect(band).connect(gain).connect(ctx.destination);
+      src.start(now);
+      src.stop(now + dur);
+    } catch (err) {
+      console.warn("Raccoon sound failed:", err);
+    }
+  }, delayMs);
 }
 
 function playRaccoonShh() {
