@@ -56,6 +56,7 @@ const effectsTabs = document.getElementById("effectsTabs");
 const effectsTabPill = document.getElementById("effectsTabPill");
 const leavesLayer = document.getElementById("leavesLayer");
 const todayDate = document.getElementById("todayDate");
+const raccoonPeek = document.getElementById("raccoonPeek");
 const seatsOnlySection = document.getElementById("seatsOnlySection");
 const personOnlySection = document.getElementById("personOnlySection");
 const groupsOnlySection = document.getElementById("groupsOnlySection");
@@ -1720,6 +1721,67 @@ async function init() {
     }
   );
 }
+
+// ---------- Space bar: random fun animation ----------
+
+const RACCOON_ANIMATION_MS = 3800;
+let spaceAnimationPlaying = false;
+
+function playRaccoonShh() {
+  raccoonPeek.style.left = `${15 + Math.random() * 70}%`;
+  raccoonPeek.classList.remove("playing");
+  void raccoonPeek.offsetWidth; // restart the CSS animation from the top
+  raccoonPeek.classList.add("playing");
+  return RACCOON_ANIMATION_MS;
+}
+
+// Each entry plays one animation and returns how long it runs (ms). More to
+// come — pressing Space picks one at random.
+const SPACE_ANIMATIONS = [playRaccoonShh];
+
+function playRandomSpaceAnimation() {
+  if (spaceAnimationPlaying) return;
+  spaceAnimationPlaying = true;
+  const play = SPACE_ANIMATIONS[Math.floor(Math.random() * SPACE_ANIMATIONS.length)];
+  const duration = play();
+  setTimeout(() => {
+    spaceAnimationPlaying = false;
+    raccoonPeek.classList.remove("playing");
+  }, duration + 50);
+}
+
+function isTextEntryTarget(el) {
+  if (!el) return false;
+  if (el.isContentEditable) return true;
+  if (el.tagName === "TEXTAREA" || el.tagName === "SELECT") return true;
+  if (el.tagName === "INPUT") return !["button", "submit", "reset", "checkbox", "radio"].includes(el.type);
+  return false;
+}
+
+// Space also "clicks" a focused button (e.g. Losuj right after pressing it),
+// so for non-text targets we swallow both keydown and keyup of Space — that
+// way the animation plays instead of re-triggering whatever has focus.
+function spaceShouldTrigger(e) {
+  return (
+    e.code === "Space" &&
+    !e.ctrlKey &&
+    !e.metaKey &&
+    !e.altKey &&
+    !isTextEntryTarget(e.target) &&
+    !appRoot.classList.contains("hidden") &&
+    !isModalOpen()
+  );
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!spaceShouldTrigger(e)) return;
+  e.preventDefault();
+  if (!e.repeat) playRandomSpaceAnimation();
+});
+
+document.addEventListener("keyup", (e) => {
+  if (spaceShouldTrigger(e)) e.preventDefault();
+});
 
 // Runs last, once every const/let above this point has been initialized —
 // init() (called from unlockApp) reaches back up to things like `state` that

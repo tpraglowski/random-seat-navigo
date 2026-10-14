@@ -1161,6 +1161,62 @@ textarea {
   animation-fill-mode: forwards;
 }
 
+/* Space-bar easter egg: raccoon pops up from the bottom, shushes, ducks away. */
+.raccoon-peek {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  width: clamp(150px, 22vw, 240px);
+  z-index: 600;
+  pointer-events: none;
+  transform: translate(-50%, 105%);
+}
+
+.raccoon-peek svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+.raccoon-paw {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transform: translate(34px, 70px) rotate(25deg);
+}
+
+.raccoon-finger { transform-box: fill-box; transform-origin: 50% 100%; }
+.raccoon-pupil { transform-box: fill-box; }
+
+.raccoon-peek.playing { animation: raccoon-rise 3.8s linear forwards; }
+.raccoon-peek.playing .raccoon-paw { animation: raccoon-paw 3.8s linear forwards; }
+.raccoon-peek.playing .raccoon-finger { animation: raccoon-finger 3.8s linear forwards; }
+.raccoon-peek.playing .raccoon-pupil { animation: raccoon-look 3.8s ease-in-out forwards; }
+
+@keyframes raccoon-rise {
+  0% { transform: translate(-50%, 105%); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+  14% { transform: translate(-50%, 0); }
+  86% { transform: translate(-50%, 0); animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.4); }
+  100% { transform: translate(-50%, 105%); }
+}
+
+@keyframes raccoon-paw {
+  0%, 16% { transform: translate(34px, 70px) rotate(25deg); animation-timing-function: cubic-bezier(0.3, 1.4, 0.5, 1); }
+  30% { transform: none; }
+  80% { transform: none; animation-timing-function: ease-in; }
+  92%, 100% { transform: translate(34px, 70px) rotate(25deg); }
+}
+
+@keyframes raccoon-finger {
+  0%, 38% { transform: rotate(0deg); }
+  44% { transform: rotate(-7deg); }
+  50% { transform: rotate(6deg); }
+  56% { transform: rotate(-6deg); }
+  62%, 100% { transform: rotate(0deg); }
+}
+
+@keyframes raccoon-look {
+  0%, 30% { transform: translateX(0); }
+  45% { transform: translateX(-3px); }
+  65% { transform: translateX(3px); }
+  80%, 100% { transform: translateX(0); }
+}
+
 @keyframes leaf-fall {
   0% { transform: translate(0, 0) rotate(0deg); }
   100% { transform: translate(var(--drift), 110vh) rotate(var(--spin)); }
