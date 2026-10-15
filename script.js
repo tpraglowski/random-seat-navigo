@@ -57,6 +57,7 @@ const effectsTabPill = document.getElementById("effectsTabPill");
 const leavesLayer = document.getElementById("leavesLayer");
 const todayDate = document.getElementById("todayDate");
 const raccoonPeek = document.getElementById("raccoonPeek");
+const verityBox = document.getElementById("verityBox");
 const seatsOnlySection = document.getElementById("seatsOnlySection");
 const personOnlySection = document.getElementById("personOnlySection");
 const groupsOnlySection = document.getElementById("groupsOnlySection");
@@ -1805,16 +1806,35 @@ function playRaccoonShh() {
 
 // Each entry plays one animation and returns how long it runs (ms). More to
 // come — pressing Space picks one at random.
-const SPACE_ANIMATIONS = [playRaccoonShh];
+const VERITY_ANIMATION_MS = 4200;
+
+function playVerityPop() {
+  playShhSound(1550); // lines up with the "szyyyyyyy" text popping in
+  verityBox.classList.remove("playing");
+  void verityBox.offsetWidth;
+  verityBox.classList.add("playing");
+  return VERITY_ANIMATION_MS;
+}
+
+const SPACE_ANIMATIONS = [playRaccoonShh, playVerityPop];
 
 function playRandomSpaceAnimation() {
   if (spaceAnimationPlaying) return;
   spaceAnimationPlaying = true;
   const play = SPACE_ANIMATIONS[Math.floor(Math.random() * SPACE_ANIMATIONS.length)];
-  const duration = play();
+  let duration;
+  try {
+    duration = play();
+  } catch (err) {
+    // Never leave the flag stuck on, or Space would stay dead until reload.
+    spaceAnimationPlaying = false;
+    console.error(err);
+    return;
+  }
   setTimeout(() => {
     spaceAnimationPlaying = false;
     raccoonPeek.classList.remove("playing");
+    verityBox.classList.remove("playing");
   }, duration + 50);
 }
 

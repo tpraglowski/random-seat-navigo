@@ -1219,6 +1219,78 @@ textarea {
   80%, 100% { transform: translateX(0); }
 }
 
+/* Space-bar easter egg #2: a jester pops out of a jack-in-the-box and shushes. */
+.verity-box {
+  position: fixed;
+  bottom: 0;
+  left: 40%;
+  width: clamp(200px, 30vw, 340px);
+  z-index: 600;
+  pointer-events: none;
+  transform: translate(-50%, 110%);
+}
+
+.verity-box svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+.verity-pop { transform-box: fill-box; transform-origin: 50% 100%; transform: translateY(175px); }
+.verity-lid { transform-box: fill-box; transform-origin: 0% 50%; }
+
+.verity-text {
+  position: absolute;
+  left: 70%;
+  top: 4%;
+  white-space: nowrap;
+  font-size: clamp(1.7rem, 6vw, 3.4rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+  -webkit-text-stroke: 2px #2b2b2b;
+  paint-order: stroke fill;
+  text-shadow: 0 4px 0 #2b2b2b, 0 0 16px rgba(0, 0, 0, 0.35);
+  transform-origin: 0% 50%;
+  opacity: 0;
+}
+
+.verity-box.playing { animation: verity-rise 4.2s linear forwards; }
+.verity-box.playing .verity-pop { animation: verity-pop 4.2s linear forwards; }
+.verity-box.playing .verity-lid { animation: verity-lid 4.2s linear forwards; }
+.verity-box.playing .verity-text { animation: verity-text 4.2s linear forwards; }
+
+@keyframes verity-rise {
+  0% { transform: translate(-50%, 110%); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.15); }
+  10% { transform: translate(-50%, 0); }
+  92% { transform: translate(-50%, 0); animation-timing-function: ease-in; }
+  100% { transform: translate(-50%, 110%); }
+}
+
+@keyframes verity-lid {
+  0%, 10% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.3, 1.5, 0.5, 1); }
+  18% { transform: rotate(-128deg); }
+  84% { transform: rotate(-128deg); animation-timing-function: cubic-bezier(0.5, 0, 0.7, 1.4); }
+  90%, 100% { transform: rotate(0deg); }
+}
+
+@keyframes verity-pop {
+  0%, 17% { transform: translateY(175px); animation-timing-function: cubic-bezier(0.2, 1.7, 0.4, 1); }
+  30% { transform: translateY(0) rotate(0deg); animation-timing-function: ease-in-out; }
+  40% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(0) rotate(5deg); }
+  60% { transform: translateY(0) rotate(-5deg); }
+  70% { transform: translateY(0) rotate(5deg); }
+  76% { transform: translateY(0) rotate(0deg); animation-timing-function: ease-in; }
+  84%, 100% { transform: translateY(175px); }
+}
+
+@keyframes verity-text {
+  0%, 29% { opacity: 0; transform: scale(0.3) rotate(-8deg); animation-timing-function: cubic-bezier(0.2, 1.6, 0.4, 1); }
+  37% { opacity: 1; transform: scale(1) rotate(-6deg); }
+  47% { opacity: 1; transform: scale(1.08) rotate(-4deg); }
+  57% { opacity: 1; transform: scale(0.97) rotate(-7deg); }
+  67% { opacity: 1; transform: scale(1.08) rotate(-4deg); }
+  77% { opacity: 1; transform: scale(1) rotate(-6deg); animation-timing-function: ease-in; }
+  84%, 100% { opacity: 0; transform: scale(0.3) rotate(-8deg); }
+}
+
 @keyframes leaf-fall {
   0% { transform: translate(0, 0) rotate(0deg); }
   100% { transform: translate(var(--drift), 110vh) rotate(var(--spin)); }
