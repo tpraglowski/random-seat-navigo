@@ -1166,7 +1166,9 @@ textarea {
   position: fixed;
   bottom: 0;
   left: 50%;
-  width: clamp(150px, 22vw, 240px);
+  /* The SVG is 4:5, so 80vh wide = exactly the screen tall; on narrow
+     portrait screens cap by width so the face isn't cropped at the sides. */
+  width: min(80vh, 120vw);
   z-index: 600;
   pointer-events: none;
   transform: translate(-50%, 105%);

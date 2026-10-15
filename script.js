@@ -1797,7 +1797,6 @@ function playShhSound(delayMs) {
 
 function playRaccoonShh() {
   playShhSound(1050);
-  raccoonPeek.style.left = `${15 + Math.random() * 70}%`;
   raccoonPeek.classList.remove("playing");
   void raccoonPeek.offsetWidth; // restart the CSS animation from the top
   raccoonPeek.classList.add("playing");
