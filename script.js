@@ -1,5 +1,6 @@
 import { firebaseConfig } from './firebase-config.js';
 import { ACCESS_CODE } from './access-config.js';
+import { createMemeAnimations } from './memes.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js';
@@ -1834,8 +1835,27 @@ const SPACE_ANIMATIONS = [
   { id: "spidey", play: playSpideySwing },
 ];
 
+// Meme animations live in memes.js; they join the same list and get their own
+// icon tile in Settings, generated here so the markup stays in one place.
 const DISABLED_ANIMS_KEY = "random-seat-navigo-disabled-animations";
 const animToggles = document.getElementById("animToggles");
+
+createMemeAnimations({
+  getAudioCtx: () => {
+    unlockRaccoonAudio();
+    return raccoonAudioCtx;
+  },
+}).forEach((meme) => {
+  SPACE_ANIMATIONS.push({ id: meme.id, play: meme.play });
+  const btn = document.createElement("button");
+  btn.className = "anim-toggle";
+  btn.type = "button";
+  btn.dataset.anim = meme.id;
+  btn.title = meme.title;
+  btn.setAttribute("aria-pressed", "true");
+  btn.innerHTML = `${meme.icon}<span class="anim-toggle-name">${meme.name}</span><span class="anim-toggle-state"></span>`;
+  animToggles.appendChild(btn);
+});
 let disabledAnimations = new Set();
 try {
   disabledAnimations = new Set(JSON.parse(localStorage.getItem(DISABLED_ANIMS_KEY) || "[]"));
