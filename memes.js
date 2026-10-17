@@ -29,6 +29,21 @@ const MEME_CSS = `
   animation: meme-bob 0.3s steps(1) infinite alternate-reverse;
 }
 
+.meme-quiet-text {
+  position: absolute; left: 50%; top: 24%; white-space: nowrap; opacity: 0;
+  font: 900 clamp(3rem, 15vw, 9.5rem) Impact, "Arial Black", sans-serif; color: #fff;
+  -webkit-text-stroke: 5px #0b1b4d; paint-order: stroke fill; text-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
+  transform: translate(-50%, -50%) scale(0.4); animation: meme-quiet-pop 4.2s linear forwards;
+}
+@keyframes meme-quiet-pop {
+  0%, 26% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-5deg); animation-timing-function: cubic-bezier(0.2, 1.6, 0.4, 1); }
+  36% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-3deg); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.06) rotate(-2deg); }
+  64% { opacity: 1; transform: translate(-50%, -50%) scale(0.98) rotate(-4deg); }
+  78% { opacity: 1; transform: translate(-50%, -50%) scale(1.04) rotate(-3deg); animation-timing-function: ease-in; }
+  90%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-5deg); }
+}
+
 /* ---- Among Us ---- */
 .meme-amogus { position: absolute; left: 0; bottom: 7%; width: clamp(72px, 12vw, 130px); transform: translateX(-20vw); animation: meme-amogus-walk 4.2s linear forwards; }
 @keyframes meme-amogus-walk { from { transform: translateX(-20vw); } to { transform: translateX(125vw); } }
@@ -51,26 +66,33 @@ const MEME_CSS = `
   76%, 100% { opacity: 0; transform: translateX(-50%) scale(0.3); }
 }
 
-/* ---- Chrome T-Rex ---- */
-.meme-dino-stage { position: absolute; inset: 0; background: #f7f7f7; opacity: 0; animation: meme-fade-mid 4s ease-in-out forwards; font-family: "Courier New", monospace; }
-.meme-dino-score { position: absolute; top: 12%; right: 6%; color: #535353; font-weight: 700; font-size: clamp(1rem, 2.6vw, 1.6rem); letter-spacing: 0.1em; }
-.meme-dino-score .hi { color: #757575; margin-right: 1em; }
-.meme-dino-ground { position: absolute; left: 0; right: 0; bottom: 14%; height: 2px; background: #535353; }
-.meme-dino, .meme-cactus { --w: clamp(52px, 9vw, 84px); position: absolute; bottom: 14%; }
-.meme-dino { left: 16vw; width: var(--w); --jump: clamp(100px, 24vh, 200px); animation: meme-dino-jump 4s linear forwards; }
-.meme-dino svg { width: 100%; height: auto; }
-@keyframes meme-dino-jump {
-  0%, 55% { transform: translateY(0); animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1); }
-  66% { transform: translateY(calc(-1 * var(--jump))); animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.3); }
-  82%, 100% { transform: translateY(0); }
+/* ---- Minion ---- */
+.meme-minion { position: absolute; left: 50%; bottom: 0; width: clamp(150px, 28vh, 270px); transform: translate(-50%, 110%); animation: meme-minion 3.8s linear forwards; }
+.meme-minion svg { width: 100%; height: auto; overflow: visible; }
+@keyframes meme-minion {
+  0% { transform: translate(-50%, 110%); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.15); }
+  12% { transform: translate(-50%, 0) scale(1, 1); animation-timing-function: ease-out; }
+  19% { transform: translate(-50%, -30px) scale(0.96, 1.05); animation-timing-function: ease-in; }
+  25% { transform: translate(-50%, 0) scale(1.05, 0.95); animation-timing-function: ease-out; }
+  37% { transform: translate(-50%, -30px) scale(0.96, 1.05); animation-timing-function: ease-in; }
+  43% { transform: translate(-50%, 0) scale(1.05, 0.95); animation-timing-function: ease-out; }
+  55% { transform: translate(-50%, -30px) scale(0.96, 1.05); animation-timing-function: ease-in; }
+  61% { transform: translate(-50%, 0) scale(1.05, 0.95); animation-timing-function: ease-out; }
+  73% { transform: translate(-50%, -30px) scale(0.96, 1.05); animation-timing-function: ease-in; }
+  79%, 88% { transform: translate(-50%, 0) scale(1, 1); animation-timing-function: ease-in; }
+  100% { transform: translate(-50%, 110%); }
 }
-.meme-dino-l, .meme-dino-r { animation: meme-dstep 0.18s steps(1) infinite alternate; }
-.meme-dino-r { animation-direction: alternate-reverse; }
-@keyframes meme-dstep { from { transform: translateY(0); } to { transform: translateY(-14%); } }
-.meme-dino-l, .meme-dino-r { transform-box: fill-box; }
-.meme-cactus { left: 0; width: calc(var(--w) * 0.5); transform: translateX(110vw); animation: meme-cactus 3.8s linear forwards; }
-.meme-cactus svg { width: 100%; height: auto; }
-@keyframes meme-cactus { from { transform: translateX(110vw); } to { transform: translateX(-10vw); } }
+.meme-minion-text {
+  position: absolute; left: 50%; bottom: 102%; white-space: nowrap; opacity: 0; transform: translateX(-50%) scale(0.3);
+  font: 900 clamp(2.2rem, 8vw, 5rem) Impact, "Arial Black", sans-serif; color: #fff;
+  -webkit-text-stroke: 4px #1f3f7a; paint-order: stroke fill; letter-spacing: 0.04em; animation: meme-minion-text 3.8s linear forwards;
+}
+@keyframes meme-minion-text {
+  0%, 18% { opacity: 0; transform: translateX(-50%) scale(0.3); animation-timing-function: cubic-bezier(0.2, 1.6, 0.4, 1); }
+  26% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+  32%, 78% { opacity: 1; transform: translateX(-50%) scale(1); animation-timing-function: ease-in; }
+  86%, 100% { opacity: 0; transform: translateX(-50%) scale(0.3); }
+}
 
 /* ---- Creeper ---- */
 .meme-flash { position: absolute; inset: 0; background: #fff; opacity: 0; animation: meme-flash 4.4s linear forwards; }
@@ -110,7 +132,7 @@ const MEME_CSS = `
 }
 .meme-boom-text {
   position: absolute; left: 50%; top: 36%; opacity: 0;
-  font: 900 clamp(3rem, 14vw, 9rem) "Segoe UI", system-ui, sans-serif; color: #ff8a00;
+  font: 900 clamp(2.6rem, 12vw, 8rem) "Segoe UI", system-ui, sans-serif; color: #ff8a00;
   -webkit-text-stroke: 5px #2a1400; paint-order: stroke fill; text-shadow: 0 6px 0 #2a1400;
   animation: meme-boom-pop 4.4s linear forwards;
 }
@@ -263,6 +285,9 @@ const px = (rows, x0, y0, cell, fill) =>
     .flatMap((row, y) => [...row].map((c, x) => (c === "#" ? `<rect x="${x0 + x * cell}" y="${y0 + y * cell}" width="${cell}" height="${cell}" fill="${fill}"/>` : "")))
     .join("");
 
+// Same soft "shhhh" the other animations use: filtered noise swelling in and out.
+const SHH = { filter: "bandpass", from: 3200, to: 4800, q: 0.6, peak: 0.55, attack: 0.3, release: 0.5 };
+
 export function createMemeAnimations({ getAudioCtx }) {
   const sfx = makeSfx(getAudioCtx);
 
@@ -272,6 +297,7 @@ export function createMemeAnimations({ getAudioCtx }) {
     const stars = Array.from({ length: 18 }, () => `<i class="meme-star" style="left:${rand(0, 100)}%;top:${rand(0, 100)}%;animation-delay:${rand(0, 0.9).toFixed(2)}s"></i>`).join("");
     mount(
       `<div class="meme-sky"></div><div class="meme-stars">${stars}</div>
+       <span class="meme-quiet-text">ciii…</span>
        <div class="meme-nyan"><div class="meme-nyan-trail"></div>
        <svg class="meme-nyan-cat" viewBox="0 0 130 90">
          <rect x="2" y="42" width="22" height="10" rx="3" fill="#9a9a9a" stroke="#222" stroke-width="3"/>
@@ -289,8 +315,7 @@ export function createMemeAnimations({ getAudioCtx }) {
        </svg></div>`,
       NYAN_MS
     );
-    // a cheerful little arpeggio as it zooms by
-    [0, 1, 2, 3, 4, 5, 6, 7].forEach((i) => sfx.blip(300 + i * 230, [523, 659, 784, 1047][i % 4], [523, 659, 784, 1047][i % 4], 0.16, 0.08, "square"));
+    sfx.noise(1150, 1.6, SHH);
     return NYAN_MS;
   }
 
@@ -298,7 +323,7 @@ export function createMemeAnimations({ getAudioCtx }) {
   const AMOGUS_MS = 4200;
   function playAmongUs() {
     mount(
-      `<div class="meme-amogus"><span class="meme-bubble">sus?</span>
+      `<div class="meme-amogus"><span class="meme-bubble">ciii!</span>
        <svg viewBox="0 0 100 120">
          <rect x="4" y="42" width="20" height="44" rx="9" fill="#8f0e0e" stroke="#111" stroke-width="3"/>
          <rect class="meme-leg-l" x="22" y="82" width="26" height="30" rx="8" fill="#c51111" stroke="#111" stroke-width="3"/>
@@ -310,40 +335,36 @@ export function createMemeAnimations({ getAudioCtx }) {
        </svg></div>`,
       AMOGUS_MS
     );
-    sfx.blip(1450, 220, 180, 0.12, 0.12, "triangle");
-    sfx.blip(1650, 220, 180, 0.12, 0.12, "triangle");
+    sfx.noise(1350, 1.6, SHH);
     return AMOGUS_MS;
   }
 
-  // ---------------- Chrome T-Rex ----------------
-  const DINO_MS = 4000;
-  function playDino() {
-    const root = mount(
-      `<div class="meme-dino-stage">
-         <div class="meme-dino-score"><span class="hi">HI 00420</span><span class="now">00000</span></div>
-         <div class="meme-dino-ground"></div>
-         <div class="meme-cactus"><svg viewBox="0 0 30 44" fill="#535353" shape-rendering="crispEdges">
-           <rect x="11" y="0" width="9" height="44"/><rect x="2" y="16" width="9" height="6"/><rect x="2" y="8" width="6" height="14"/>
-           <rect x="20" y="12" width="8" height="6"/><rect x="22" y="4" width="6" height="14"/></svg></div>
-         <div class="meme-dino"><svg viewBox="0 0 60 64" fill="#535353" shape-rendering="crispEdges">
-           <rect x="0" y="26" width="10" height="8"/><rect x="6" y="32" width="10" height="8"/>
-           <rect x="10" y="28" width="30" height="22"/><rect x="32" y="16" width="12" height="16"/>
-           <rect x="30" y="2" width="28" height="18"/><rect x="38" y="18" width="20" height="6"/>
-           <rect x="46" y="6" width="5" height="5" fill="#f7f7f7"/><rect x="44" y="16" width="14" height="2" fill="#f7f7f7"/>
-           <rect x="40" y="36" width="10" height="4"/><rect x="46" y="36" width="4" height="8"/>
-           <rect class="meme-dino-l" x="16" y="50" width="8" height="14"/><rect class="meme-dino-r" x="30" y="50" width="8" height="14"/></svg></div>
-       </div>`,
-      DINO_MS
+  // ---------------- Minion ----------------
+  const MINION_MS = 3800;
+  function playMinion() {
+    mount(
+      `<div class="meme-minion"><span class="meme-minion-text">CIII!!</span>
+         <svg viewBox="0 0 100 150">
+           <rect x="30" y="118" width="16" height="12" fill="#2c5fa6"/><rect x="54" y="118" width="16" height="12" fill="#2c5fa6"/>
+           <rect x="26" y="126" width="24" height="12" rx="6" fill="#222"/><rect x="50" y="126" width="24" height="12" rx="6" fill="#222"/>
+           <path d="M20 84 Q8 98 14 110" stroke="#f9d71c" stroke-width="10" stroke-linecap="round" fill="none"/>
+           <circle cx="14" cy="112" r="7" fill="#222"/>
+           <rect x="20" y="10" width="60" height="112" rx="30" fill="#f9d71c" stroke="#c9a800" stroke-width="2"/>
+           <path d="M20 82 H80 V100 Q80 122 58 122 H42 Q20 122 20 100 Z" fill="#2c5fa6"/>
+           <rect x="22" y="62" width="8" height="24" fill="#2c5fa6"/><rect x="70" y="62" width="8" height="24" fill="#2c5fa6"/>
+           <rect x="42" y="94" width="16" height="12" rx="4" fill="#244f8c"/>
+           <path d="M44 12 Q42 2 36 0 M50 12 Q50 0 50 -4 M56 12 Q58 2 64 0" stroke="#222" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+           <rect x="18" y="34" width="64" height="8" fill="#3a3a3a"/>
+           <circle cx="50" cy="38" r="18" fill="#c9ced3" stroke="#555" stroke-width="3"/>
+           <circle cx="50" cy="38" r="12" fill="#fff"/><circle cx="51" cy="39" r="5.5" fill="#5b3a1a"/><circle cx="51" cy="39" r="2.6" fill="#111"/><circle cx="53" cy="37" r="1.4" fill="#fff"/>
+           <path d="M80 86 Q88 70 62 74" stroke="#f9d71c" stroke-width="10" stroke-linecap="round" fill="none"/>
+           <ellipse cx="57" cy="74" rx="8" ry="7" fill="#222"/>
+           <rect x="49.5" y="52" width="7" height="24" rx="3.5" fill="#222"/>
+         </svg></div>`,
+      MINION_MS
     );
-    const now = root.querySelector(".now");
-    let score = 0;
-    const timer = setInterval(() => {
-      score += 1 + Math.floor(Math.random() * 2);
-      now.textContent = String(score).padStart(5, "0");
-    }, 55);
-    setTimeout(() => clearInterval(timer), DINO_MS);
-    sfx.blip(2250, 420, 900, 0.14, 0.12, "square"); // the jump
-    return DINO_MS;
+    sfx.noise(900, 1.7, SHH);
+    return MINION_MS;
   }
 
   // ---------------- Creeper ----------------
@@ -370,12 +391,11 @@ export function createMemeAnimations({ getAudioCtx }) {
            <rect x="0" y="0" width="80" height="200" fill="#5eb64f"/>${patches}
            <rect x="0" y="200" width="36" height="60" fill="#4fa142"/><rect x="44" y="200" width="36" height="60" fill="#4fa142"/>${face}
          </svg></div></div>
-       ${debris}<span class="meme-boom-text">BUM!</span>`,
+       ${debris}<span class="meme-boom-text">CISZA!</span>`,
       CREEPER_MS
     );
     sfx.noise(1760, 1.4, { filter: "highpass", from: 2600, to: 6000, q: 0.5, peak: 0.35, attack: 0.5, release: 0.15 });
-    sfx.noise(3170, 0.9, { filter: "lowpass", from: 900, to: 90, q: 0.7, peak: 0.9, attack: 0.01, release: 0.8 });
-    sfx.blip(3170, 120, 28, 0.6, 0.6, "sine");
+    sfx.noise(3170, 0.6, { filter: "lowpass", from: 1500, to: 200, q: 0.7, peak: 0.12, attack: 0.01, release: 0.5 }); // a soft "pff", not a bang
     return CREEPER_MS;
   }
 
@@ -395,13 +415,15 @@ export function createMemeAnimations({ getAudioCtx }) {
            <circle cx="75" cy="92" r="5" fill="#fff"/><circle cx="69" cy="103" r="2" fill="#fff"/>
            <circle cx="131" cy="92" r="5" fill="#fff"/><circle cx="125" cy="103" r="2" fill="#fff"/>
            <ellipse cx="100" cy="114" rx="3" ry="2.4" fill="#1b1b1b"/>
-           <ellipse cx="100" cy="137" rx="9" ry="12" fill="#7a2a1a"/><ellipse cx="100" cy="144" rx="6" ry="5" fill="#e86a6a"/>
+           <path d="M150 200 Q150 160 112 146" stroke="#f8d84a" stroke-width="26" stroke-linecap="round" fill="none"/>
+           <ellipse cx="104" cy="148" rx="15" ry="12" fill="#f8d84a" stroke="#c9a400" stroke-width="2.5"/>
+           <rect x="94" y="124" width="12" height="40" rx="6" fill="#f8d84a" stroke="#c9a400" stroke-width="2.5"/>
          </svg>
-         <span class="meme-pika-text">Kartkówka?!</span>
+         <span class="meme-pika-text">Ciii…</span>
        </div>`,
       PIKA_MS
     );
-    sfx.blip(180, 700, 1400, 0.18, 0.12, "triangle"); // a little gasp
+    sfx.noise(700, 1.7, SHH);
     return PIKA_MS;
   }
 
@@ -410,11 +432,11 @@ export function createMemeAnimations({ getAudioCtx }) {
   function playDoge() {
     const words = [
       ["wow", "8%", "20%", "#ff4fd8", -8, 0.5],
-      ["such szkoła", "52%", "10%", "#00e5ff", 5, 0.9],
-      ["much learn", "4%", "66%", "#ffe600", -4, 1.2],
-      ["very kartkówka", "50%", "78%", "#7cff3a", 6, 1.5],
-      ["so zeszyt", "66%", "36%", "#ff9a00", -6, 1.8],
-      ["amaze", "22%", "84%", "#b57bff", 4, 2.1],
+      ["such cisza", "52%", "10%", "#00e5ff", 5, 0.9],
+      ["much ciii", "4%", "66%", "#ffe600", -4, 1.2],
+      ["very spokój", "50%", "78%", "#7cff3a", 6, 1.5],
+      ["so szept", "66%", "36%", "#ff9a00", -6, 1.8],
+      ["quiet pls", "22%", "84%", "#b57bff", 4, 2.1],
     ]
       .map(([t, l, tp, c, r, d]) => `<span class="meme-word" style="left:${l};top:${tp};--c:${c};--r:${r}deg;--d:${d}s">${t}</span>`)
       .join("");
@@ -434,8 +456,7 @@ export function createMemeAnimations({ getAudioCtx }) {
        </div>${words}`,
       DOGE_MS
     );
-    sfx.blip(500, 190, 120, 0.14, 0.15, "square"); // "bork"
-    sfx.blip(760, 190, 120, 0.14, 0.15, "square");
+    sfx.noise(900, 1.7, SHH);
     return DOGE_MS;
   }
 
@@ -450,8 +471,8 @@ export function createMemeAnimations({ getAudioCtx }) {
       icon: icon(`<rect x="8" y="18" width="7" height="16" rx="3" fill="#8f0e0e" stroke="#111" stroke-width="1.6"/><rect x="14" y="34" width="9" height="10" rx="3" fill="#c51111" stroke="#111" stroke-width="1.6"/><rect x="26" y="34" width="9" height="10" rx="3" fill="#c51111" stroke="#111" stroke-width="1.6"/><path d="M14 18 C14 8 20 4 25 4 C32 4 36 9 36 18 V36 H14 Z" fill="#c51111" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/><rect x="22" y="11" width="19" height="12" rx="6" fill="#9fd8e8" stroke="#111" stroke-width="1.6"/>`),
     },
     {
-      id: "dino", name: "Dino", title: "Dinozaur z Chrome", play: playDino,
-      icon: icon(`<g fill="#535353" shape-rendering="crispEdges"><rect x="3" y="20" width="7" height="6"/><rect x="7" y="25" width="7" height="6"/><rect x="10" y="22" width="20" height="14"/><rect x="24" y="14" width="8" height="12"/><rect x="22" y="4" width="20" height="13"/><rect x="28" y="15" width="14" height="4"/><rect x="14" y="36" width="5" height="9"/><rect x="24" y="36" width="5" height="9"/></g><rect x="33" y="7" width="4" height="4" fill="#f7f7f7"/>`),
+      id: "minion", name: "Minionek", title: "Minionek", play: playMinion,
+      icon: icon(`<rect x="14" y="4" width="20" height="38" rx="10" fill="#f9d71c" stroke="#c9a800" stroke-width="1.2"/><path d="M14 28 H34 V34 Q34 42 27 42 H21 Q14 42 14 34 Z" fill="#2c5fa6"/><rect x="13" y="13" width="22" height="3" fill="#3a3a3a"/><circle cx="24" cy="14.5" r="7" fill="#c9ced3" stroke="#555" stroke-width="1.4"/><circle cx="24" cy="14.5" r="4.6" fill="#fff"/><circle cx="24.5" cy="15" r="2.2" fill="#5b3a1a"/><circle cx="24.5" cy="15" r="1" fill="#111"/><rect x="22" y="21" width="3.2" height="11" rx="1.6" fill="#222"/><ellipse cx="23.6" cy="31" rx="4" ry="3.2" fill="#222"/>`),
     },
     {
       id: "creeper", name: "Creeper", title: "Creeper", play: playCreeper,
