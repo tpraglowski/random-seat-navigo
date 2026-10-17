@@ -1808,10 +1808,46 @@ function playRaccoonShh() {
 
 // Each entry plays one animation and returns how long it runs (ms). More to
 // come — pressing Space picks one at random.
-const VERITY_ANIMATION_MS = 4200;
+const VERITY_ANIMATION_MS = 7400;
+
+// Verity in the Minecraft mod talks through text-to-speech that imitates the
+// flat, synthetic voice from the original video — so the nearest thing a
+// browser has is its built-in speech synthesis, nudged slow and high-pitched.
+function pickVerityVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  return (
+    voices.find((v) => /^en[-_]US/i.test(v.lang) && /google us english|microsoft (david|mark|guy|zira)/i.test(v.name)) ||
+    voices.find((v) => /^en[-_]US/i.test(v.lang)) ||
+    voices.find((v) => /^en/i.test(v.lang)) ||
+    null
+  );
+}
+
+function speakVerity(text, delayMs) {
+  setTimeout(() => {
+    try {
+      if (!("speechSynthesis" in window)) return;
+      const synth = window.speechSynthesis;
+      synth.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 0.82;
+      utterance.pitch = 1.35;
+      const voice = pickVerityVoice();
+      if (voice) utterance.voice = voice;
+      synth.speak(utterance);
+    } catch (err) {
+      console.warn("Verity can't speak:", err);
+    }
+  }, delayMs);
+}
+
+// some browsers fill the voice list lazily — touch it early so it's ready
+if ("speechSynthesis" in window) window.speechSynthesis.getVoices();
 
 function playVerityPop() {
-  playShhSound(1550); // lines up with the "szyyyyyyy" text popping in
+  speakVerity("Hello, I am Verity. Now be quiet.", 2150); // right after she pops out
+  playShhSound(4900); // the "szyyyyyyy" text pops in at ~66%
   verityBox.classList.remove("playing");
   void verityBox.offsetWidth;
   verityBox.classList.add("playing");

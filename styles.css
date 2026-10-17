@@ -1262,7 +1262,10 @@ textarea {
   80%, 100% { transform: translateX(0); }
 }
 
-/* Space-bar easter egg #2: a jester pops out of a jack-in-the-box and shushes. */
+/* Space-bar easter egg #2: a smiley ball pops out of a cardboard box, introduces
+   itself out loud ("Hello, I am Verity. Now be quiet.") and then shushes. 7.4s
+   timeline: rise 0-8%, flaps open 8-15%, pop up 14-26%, talk 28-64%, shush
+   text 66-88%, duck back 88-95%, box sinks 95-100%. */
 .verity-box {
   position: fixed;
   bottom: 0;
@@ -1295,53 +1298,95 @@ textarea {
   opacity: 0;
 }
 
-.verity-box.playing { animation: verity-rise 4.2s linear forwards; }
-.verity-box.playing .verity-pop { animation: verity-pop 4.2s linear forwards; }
-.verity-box.playing .verity-flap-l { animation: verity-flap-l 4.2s linear forwards; }
-.verity-box.playing .verity-flap-r { animation: verity-flap-r 4.2s linear forwards; }
-.verity-box.playing .verity-text { animation: verity-text 4.2s linear forwards; }
+/* what she says, as a speech bubble (also covers machines with no TTS voice) */
+.verity-subtitle {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  bottom: 92%;
+  width: max-content;
+  max-width: min(64vw, 340px);
+  padding: 8px 14px;
+  background: #fff;
+  color: #111;
+  border: 3px solid #2b2b2b;
+  border-radius: 16px;
+  font: 700 clamp(0.95rem, 2.4vw, 1.5rem) "Segoe UI", system-ui, sans-serif;
+  line-height: 1.25;
+  text-align: center;
+  transform-origin: 50% 100%;
+  opacity: 0;
+}
+.verity-subtitle::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: solid #2b2b2b;
+  border-width: 0 3px 3px 0;
+  transform: translate(-50%, -8px) rotate(45deg);
+}
+
+.verity-box.playing { animation: verity-rise 7.4s linear forwards; }
+.verity-box.playing .verity-pop { animation: verity-pop 7.4s linear forwards; }
+.verity-box.playing .verity-flap-l { animation: verity-flap-l 7.4s linear forwards; }
+.verity-box.playing .verity-flap-r { animation: verity-flap-r 7.4s linear forwards; }
+.verity-box.playing .verity-text { animation: verity-text 7.4s linear forwards; }
+.verity-box.playing .verity-subtitle { animation: verity-subtitle 7.4s linear forwards; }
 
 @keyframes verity-rise {
   0% { transform: translate(-50%, 110%); animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1.15); }
-  10% { transform: translate(-50%, 0); }
-  92% { transform: translate(-50%, 0); animation-timing-function: ease-in; }
+  8% { transform: translate(-50%, 0); }
+  95% { transform: translate(-50%, 0); animation-timing-function: ease-in; }
   100% { transform: translate(-50%, 110%); }
 }
 
 @keyframes verity-flap-l {
-  0%, 10% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.3, 1.5, 0.5, 1); }
-  18% { transform: rotate(-140deg); }
-  84% { transform: rotate(-140deg); animation-timing-function: cubic-bezier(0.5, 0, 0.7, 1.4); }
-  90%, 100% { transform: rotate(0deg); }
+  0%, 8% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.3, 1.5, 0.5, 1); }
+  15% { transform: rotate(-140deg); }
+  90% { transform: rotate(-140deg); animation-timing-function: cubic-bezier(0.5, 0, 0.7, 1.4); }
+  95%, 100% { transform: rotate(0deg); }
 }
 
 @keyframes verity-flap-r {
-  0%, 10% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.3, 1.5, 0.5, 1); }
-  18% { transform: rotate(140deg); }
-  84% { transform: rotate(140deg); animation-timing-function: cubic-bezier(0.5, 0, 0.7, 1.4); }
-  90%, 100% { transform: rotate(0deg); }
+  0%, 8% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.3, 1.5, 0.5, 1); }
+  15% { transform: rotate(140deg); }
+  90% { transform: rotate(140deg); animation-timing-function: cubic-bezier(0.5, 0, 0.7, 1.4); }
+  95%, 100% { transform: rotate(0deg); }
 }
 
 @keyframes verity-pop {
-  0%, 17% { transform: translateY(175px); animation-timing-function: cubic-bezier(0.2, 1.7, 0.4, 1); }
-  30% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-out; }
-  36% { transform: translateY(-22px) scale(0.95, 1.07); animation-timing-function: ease-in; }
-  42% { transform: translateY(0) scale(1.06, 0.92); animation-timing-function: ease-out; }
-  50% { transform: translateY(-16px) scale(0.97, 1.04); animation-timing-function: ease-in; }
-  57% { transform: translateY(0) scale(1.05, 0.94); animation-timing-function: ease-out; }
-  64% { transform: translateY(-12px) scale(0.98, 1.03); animation-timing-function: ease-in; }
-  70%, 76% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in; }
-  84%, 100% { transform: translateY(175px); }
+  0%, 14% { transform: translateY(175px); animation-timing-function: cubic-bezier(0.2, 1.7, 0.4, 1); }
+  26% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-out; }
+  32% { transform: translateY(-22px) scale(0.95, 1.07); animation-timing-function: ease-in; }
+  38% { transform: translateY(0) scale(1.06, 0.92); animation-timing-function: ease-out; }
+  44% { transform: translateY(-16px) scale(0.97, 1.04); animation-timing-function: ease-in; }
+  50% { transform: translateY(0) scale(1.05, 0.94); animation-timing-function: ease-out; }
+  56% { transform: translateY(-20px) scale(0.96, 1.06); animation-timing-function: ease-in; }
+  62% { transform: translateY(0) scale(1.05, 0.94); animation-timing-function: ease-out; }
+  72% { transform: translateY(-14px) scale(0.98, 1.03); animation-timing-function: ease-in; }
+  78% { transform: translateY(0) scale(1.04, 0.96); animation-timing-function: ease-out; }
+  84%, 88% { transform: translateY(-14px) scale(0.98, 1.03); animation-timing-function: ease-in; }
+  90% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in; }
+  95%, 100% { transform: translateY(175px); }
+}
+
+@keyframes verity-subtitle {
+  0%, 27% { opacity: 0; transform: scale(0.3); animation-timing-function: cubic-bezier(0.2, 1.6, 0.4, 1); }
+  31% { opacity: 1; transform: scale(1); }
+  62% { opacity: 1; transform: scale(1); animation-timing-function: ease-in; }
+  66%, 100% { opacity: 0; transform: scale(0.3); }
 }
 
 @keyframes verity-text {
-  0%, 29% { opacity: 0; transform: scale(0.3) rotate(-8deg); animation-timing-function: cubic-bezier(0.2, 1.6, 0.4, 1); }
-  37% { opacity: 1; transform: scale(1) rotate(-6deg); }
-  47% { opacity: 1; transform: scale(1.08) rotate(-4deg); }
-  57% { opacity: 1; transform: scale(0.97) rotate(-7deg); }
-  67% { opacity: 1; transform: scale(1.08) rotate(-4deg); }
-  77% { opacity: 1; transform: scale(1) rotate(-6deg); animation-timing-function: ease-in; }
-  84%, 100% { opacity: 0; transform: scale(0.3) rotate(-8deg); }
+  0%, 65% { opacity: 0; transform: scale(0.3) rotate(-8deg); animation-timing-function: cubic-bezier(0.2, 1.6, 0.4, 1); }
+  71% { opacity: 1; transform: scale(1) rotate(-6deg); }
+  77% { opacity: 1; transform: scale(1.08) rotate(-4deg); }
+  83% { opacity: 1; transform: scale(0.97) rotate(-7deg); animation-timing-function: ease-in; }
+  88%, 100% { opacity: 0; transform: scale(0.3) rotate(-8deg); }
 }
 
 /* Space-bar easter egg #3: a web-slinger swings across the screen. The
