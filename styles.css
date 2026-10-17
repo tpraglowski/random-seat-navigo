@@ -1263,7 +1263,7 @@ textarea {
 }
 
 /* Space-bar easter egg #2: a smiley ball pops out of a cardboard box, introduces
-   itself out loud ("Hello, I am Verity. Now be quiet.") and then shushes. 7.4s
+   itself in a speech bubble ("Hello, I am Verity. Now be quiet.") and then shushes. 7.4s
    timeline: rise 0-8%, flaps open 8-15%, pop up 14-26%, talk 28-64%, shush
    text 66-88%, duck back 88-95%, box sinks 95-100%. */
 .verity-box {
