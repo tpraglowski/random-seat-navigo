@@ -1233,7 +1233,8 @@ textarea {
 .verity-box svg { display: block; width: 100%; height: auto; overflow: visible; }
 
 .verity-pop { transform-box: fill-box; transform-origin: 50% 100%; transform: translateY(175px); }
-.verity-lid { transform-box: fill-box; transform-origin: 0% 50%; }
+.verity-flap-l { transform-box: fill-box; transform-origin: 0% 50%; }
+.verity-flap-r { transform-box: fill-box; transform-origin: 100% 50%; }
 
 .verity-text {
   position: absolute;
@@ -1253,7 +1254,8 @@ textarea {
 
 .verity-box.playing { animation: verity-rise 4.2s linear forwards; }
 .verity-box.playing .verity-pop { animation: verity-pop 4.2s linear forwards; }
-.verity-box.playing .verity-lid { animation: verity-lid 4.2s linear forwards; }
+.verity-box.playing .verity-flap-l { animation: verity-flap-l 4.2s linear forwards; }
+.verity-box.playing .verity-flap-r { animation: verity-flap-r 4.2s linear forwards; }
 .verity-box.playing .verity-text { animation: verity-text 4.2s linear forwards; }
 
 @keyframes verity-rise {
@@ -1263,21 +1265,29 @@ textarea {
   100% { transform: translate(-50%, 110%); }
 }
 
-@keyframes verity-lid {
+@keyframes verity-flap-l {
   0%, 10% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.3, 1.5, 0.5, 1); }
-  18% { transform: rotate(-128deg); }
-  84% { transform: rotate(-128deg); animation-timing-function: cubic-bezier(0.5, 0, 0.7, 1.4); }
+  18% { transform: rotate(-140deg); }
+  84% { transform: rotate(-140deg); animation-timing-function: cubic-bezier(0.5, 0, 0.7, 1.4); }
+  90%, 100% { transform: rotate(0deg); }
+}
+
+@keyframes verity-flap-r {
+  0%, 10% { transform: rotate(0deg); animation-timing-function: cubic-bezier(0.3, 1.5, 0.5, 1); }
+  18% { transform: rotate(140deg); }
+  84% { transform: rotate(140deg); animation-timing-function: cubic-bezier(0.5, 0, 0.7, 1.4); }
   90%, 100% { transform: rotate(0deg); }
 }
 
 @keyframes verity-pop {
   0%, 17% { transform: translateY(175px); animation-timing-function: cubic-bezier(0.2, 1.7, 0.4, 1); }
-  30% { transform: translateY(0) rotate(0deg); animation-timing-function: ease-in-out; }
-  40% { transform: translateY(0) rotate(-5deg); }
-  50% { transform: translateY(0) rotate(5deg); }
-  60% { transform: translateY(0) rotate(-5deg); }
-  70% { transform: translateY(0) rotate(5deg); }
-  76% { transform: translateY(0) rotate(0deg); animation-timing-function: ease-in; }
+  30% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-out; }
+  36% { transform: translateY(-22px) scale(0.95, 1.07); animation-timing-function: ease-in; }
+  42% { transform: translateY(0) scale(1.06, 0.92); animation-timing-function: ease-out; }
+  50% { transform: translateY(-16px) scale(0.97, 1.04); animation-timing-function: ease-in; }
+  57% { transform: translateY(0) scale(1.05, 0.94); animation-timing-function: ease-out; }
+  64% { transform: translateY(-12px) scale(0.98, 1.03); animation-timing-function: ease-in; }
+  70%, 76% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in; }
   84%, 100% { transform: translateY(175px); }
 }
 
