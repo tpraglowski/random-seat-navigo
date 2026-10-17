@@ -1827,12 +1827,55 @@ function playSpideySwing() {
   return SPIDEY_ANIMATION_MS;
 }
 
-const SPACE_ANIMATIONS = [playRaccoonShh, playVerityPop, playSpideySwing];
+// ids match the data-anim attributes on the tiles in Settings
+const SPACE_ANIMATIONS = [
+  { id: "raccoon", play: playRaccoonShh },
+  { id: "verity", play: playVerityPop },
+  { id: "spidey", play: playSpideySwing },
+];
+
+const DISABLED_ANIMS_KEY = "random-seat-navigo-disabled-animations";
+const animToggles = document.getElementById("animToggles");
+let disabledAnimations = new Set();
+try {
+  disabledAnimations = new Set(JSON.parse(localStorage.getItem(DISABLED_ANIMS_KEY) || "[]"));
+} catch {
+  // ignore a corrupted value — everything just stays enabled
+}
+
+function enabledSpaceAnimations() {
+  return SPACE_ANIMATIONS.filter((a) => !disabledAnimations.has(a.id));
+}
+
+function renderAnimToggles() {
+  animToggles.querySelectorAll(".anim-toggle").forEach((btn) => {
+    const on = !disabledAnimations.has(btn.dataset.anim);
+    btn.setAttribute("aria-pressed", String(on));
+    btn.querySelector(".anim-toggle-state").textContent = on ? "Włączona" : "Wyłączona";
+  });
+}
+
+animToggles.querySelectorAll(".anim-toggle").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const id = btn.dataset.anim;
+    if (disabledAnimations.has(id)) disabledAnimations.delete(id);
+    else disabledAnimations.add(id);
+    try {
+      localStorage.setItem(DISABLED_ANIMS_KEY, JSON.stringify([...disabledAnimations]));
+    } catch {
+      // ignore
+    }
+    renderAnimToggles();
+  });
+});
+renderAnimToggles();
 
 function playRandomSpaceAnimation() {
   if (spaceAnimationPlaying) return;
+  const pool = enabledSpaceAnimations();
+  if (!pool.length) return;
   spaceAnimationPlaying = true;
-  const play = SPACE_ANIMATIONS[Math.floor(Math.random() * SPACE_ANIMATIONS.length)];
+  const { play } = pool[Math.floor(Math.random() * pool.length)];
   let duration;
   try {
     duration = play();
@@ -1867,7 +1910,9 @@ function spaceShouldTrigger(e) {
     !e.altKey &&
     !isTextEntryTarget(e.target) &&
     !appRoot.classList.contains("hidden") &&
-    !isModalOpen()
+    !isModalOpen() &&
+    // with every animation switched off, Space goes back to behaving normally
+    enabledSpaceAnimations().length > 0
   );
 }
 

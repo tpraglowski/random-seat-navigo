@@ -317,6 +317,7 @@ body {
   width: 100vw;
   height: 100vh;
   max-width: none;
+  max-height: none;
   border-radius: 0;
   z-index: 300;
   display: flex;
@@ -474,6 +475,10 @@ body {
   border-radius: 14px;
   box-shadow: var(--shadow);
   padding: 14px;
+  /* grows with every new setting — scroll inside the panel rather than
+     running off the bottom of a page that itself never scrolls */
+  max-height: calc(100vh - 84px);
+  overflow-y: auto;
 }
 
 .settings-panel h3 {
@@ -1160,6 +1165,44 @@ textarea {
   animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
+
+.anim-toggles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.anim-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px 6px;
+  background: var(--seat-bg);
+  color: var(--ink);
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+}
+
+.anim-toggle svg { width: 40px; height: 40px; display: block; }
+.anim-toggle-name { font-size: 0.64rem; font-weight: 700; white-space: nowrap; }
+.anim-toggle-state { font-size: 0.62rem; font-weight: 700; color: var(--accent); }
+
+.anim-toggle[aria-pressed="false"] {
+  border-color: var(--border);
+  border-style: dashed;
+}
+
+.anim-toggle[aria-pressed="false"] svg { opacity: 0.4; filter: grayscale(1); }
+.anim-toggle[aria-pressed="false"] .anim-toggle-state { color: var(--muted); }
+
+.settings-panel.fullscreen .anim-toggles { width: 100%; max-width: 420px; }
+.settings-panel.fullscreen .anim-toggle svg { width: 64px; height: 64px; }
+.settings-panel.fullscreen .anim-toggle-name { font-size: 0.9rem; }
+.settings-panel.fullscreen .anim-toggle-state { font-size: 0.8rem; }
 
 /* Space-bar easter egg: raccoon pops up from the bottom, shushes, ducks away. */
 .raccoon-peek {
