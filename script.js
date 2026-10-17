@@ -58,6 +58,7 @@ const leavesLayer = document.getElementById("leavesLayer");
 const todayDate = document.getElementById("todayDate");
 const raccoonPeek = document.getElementById("raccoonPeek");
 const verityBox = document.getElementById("verityBox");
+const spideyLayer = document.getElementById("spidey");
 const seatsOnlySection = document.getElementById("seatsOnlySection");
 const personOnlySection = document.getElementById("personOnlySection");
 const groupsOnlySection = document.getElementById("groupsOnlySection");
@@ -1816,7 +1817,17 @@ function playVerityPop() {
   return VERITY_ANIMATION_MS;
 }
 
-const SPACE_ANIMATIONS = [playRaccoonShh, playVerityPop];
+const SPIDEY_ANIMATION_MS = 3800;
+
+function playSpideySwing() {
+  playShhSound(1500); // as he crosses the middle and the text pops in
+  spideyLayer.classList.remove("playing");
+  void spideyLayer.offsetWidth;
+  spideyLayer.classList.add("playing");
+  return SPIDEY_ANIMATION_MS;
+}
+
+const SPACE_ANIMATIONS = [playRaccoonShh, playVerityPop, playSpideySwing];
 
 function playRandomSpaceAnimation() {
   if (spaceAnimationPlaying) return;
@@ -1833,8 +1844,7 @@ function playRandomSpaceAnimation() {
   }
   setTimeout(() => {
     spaceAnimationPlaying = false;
-    raccoonPeek.classList.remove("playing");
-    verityBox.classList.remove("playing");
+    [raccoonPeek, verityBox, spideyLayer].forEach((el) => el.classList.remove("playing"));
   }, duration + 50);
 }
 

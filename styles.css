@@ -1301,6 +1301,84 @@ textarea {
   84%, 100% { opacity: 0; transform: scale(0.3) rotate(-8deg); }
 }
 
+/* Space-bar easter egg #3: a web-slinger swings across the screen. The
+   swing is one long pendulum hanging from a point above the viewport, so he
+   sweeps in from one top corner, dips through the middle and out the other. */
+.spidey {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 600;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.spidey.playing { visibility: visible; }
+
+.spidey-swing {
+  position: absolute;
+  left: 50%;
+  top: -45vh;
+  width: 0;
+  height: 100vh;
+  transform-origin: 0 0;
+  transform: rotate(-74deg);
+}
+
+.spidey-line {
+  position: absolute;
+  left: -1px;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.spidey-figure {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  width: clamp(90px, 15vw, 170px);
+  /* the raised hand (62,8 of the 120x170 art) sits right on the line's end */
+  transform: translate(-51.7%, -4.7%);
+}
+
+.spidey-figure svg { display: block; width: 100%; height: auto; }
+
+.spidey-text {
+  position: absolute;
+  left: 50%;
+  top: 26%;
+  white-space: nowrap;
+  font-size: clamp(3rem, 15vw, 9.5rem);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: #d9202b;
+  -webkit-text-stroke: 4px #1b1b1b;
+  paint-order: stroke fill;
+  text-shadow: 0 6px 0 #1b1b1b, 0 0 24px rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, -50%) scale(0.4);
+  opacity: 0;
+}
+
+.spidey.playing .spidey-swing { animation: spidey-swing 3.8s linear forwards; }
+.spidey.playing .spidey-text { animation: spidey-text 3.8s linear forwards; }
+
+@keyframes spidey-swing {
+  0%, 3% { transform: rotate(-74deg); animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1); }
+  85%, 100% { transform: rotate(74deg); }
+}
+
+@keyframes spidey-text {
+  0%, 36% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-6deg); animation-timing-function: cubic-bezier(0.2, 1.6, 0.4, 1); }
+  46% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(-4deg); }
+  56% { opacity: 1; transform: translate(-50%, -50%) scale(1.06) rotate(-3deg); }
+  66% { opacity: 1; transform: translate(-50%, -50%) scale(0.98) rotate(-5deg); }
+  76% { opacity: 1; transform: translate(-50%, -50%) scale(1.04) rotate(-4deg); animation-timing-function: ease-in; }
+  90%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-6deg); }
+}
+
 @keyframes leaf-fall {
   0% { transform: translate(0, 0) rotate(0deg); }
   100% { transform: translate(var(--drift), 110vh) rotate(var(--spin)); }
