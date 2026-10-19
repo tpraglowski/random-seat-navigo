@@ -491,6 +491,38 @@ body {
 
 .settings-panel h3:not(:first-child) { margin-top: 14px; }
 
+.settings-section { margin-top: 14px; }
+
+.settings-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-section-head:hover { color: var(--ink); }
+
+.settings-section-chevron { width: 16px; height: 16px; transition: transform 0.2s ease; }
+.settings-section.collapsed .settings-section-chevron { transform: rotate(-90deg); }
+.settings-section.collapsed .settings-section-head { margin-bottom: 0; }
+.settings-section.collapsed .settings-section-body { display: none; }
+
+.settings-panel.fullscreen .settings-section { width: 100%; max-width: 420px; margin-top: 28px; }
+.settings-panel.fullscreen .settings-section-head { font-size: 1rem; }
+
 .settings-hint { font-size: 0.75rem; margin: 0 0 8px; }
 
 .sub-tabs { width: 100%; background: var(--seat-bg); box-shadow: none; }

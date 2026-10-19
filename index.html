@@ -207,52 +207,60 @@
           <button class="mode-tab" data-priority="min2" type="button">Min. 2 os.</button>
         </div>
 
-        <h3>Efekty specjalne</h3>
-        <p class="hint settings-hint">Pomarańczowy motyw i spadające liście.</p>
-        <div class="mode-tabs sub-tabs" id="effectsTabs">
-          <span class="mode-tab-pill" id="effectsTabPill"></span>
-          <button class="mode-tab active" data-effects="off" type="button">Wyłączone</button>
-          <button class="mode-tab" data-effects="on" type="button">Włączone</button>
-        </div>
+        <section class="settings-section" data-section="style">
+          <button class="settings-section-head" type="button" aria-expanded="true"><span>Efekty specjalne</span><svg class="icon settings-section-chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9" /></svg></button>
+          <div class="settings-section-body">
+          <p class="hint settings-hint">Pomarańczowy motyw i spadające liście.</p>
+          <div class="mode-tabs sub-tabs" id="effectsTabs">
+            <span class="mode-tab-pill" id="effectsTabPill"></span>
+            <button class="mode-tab active" data-effects="off" type="button">Wyłączone</button>
+            <button class="mode-tab" data-effects="on" type="button">Włączone</button>
+          </div>
+          </div>
+        </section>
 
-        <h3>Animacje pod spacją</h3>
-        <p class="hint settings-hint">Kliknij ikonę, żeby włączyć lub wyłączyć animację.</p>
-        <div class="anim-toggles" id="animToggles">
-          <button class="anim-toggle" type="button" data-anim="raccoon" aria-pressed="true" title="Szop">
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <circle cx="11" cy="14" r="6" fill="#8f8f96" /><circle cx="37" cy="14" r="6" fill="#8f8f96" />
-              <circle cx="11" cy="15" r="3" fill="#3a3a40" /><circle cx="37" cy="15" r="3" fill="#3a3a40" />
-              <ellipse cx="24" cy="26" rx="17" ry="15" fill="#9a9aa1" />
-              <path d="M9 24 C14 19 20 20 24 25 C28 20 34 19 39 24 C38 31 33 32 29 30 C26 29 25 27 24 27 C23 27 22 29 19 30 C15 32 10 31 9 24Z" fill="#2e2e34" />
-              <circle cx="17" cy="25" r="2.6" fill="#fff" /><circle cx="31" cy="25" r="2.6" fill="#fff" />
-              <ellipse cx="24" cy="33" rx="8" ry="5.5" fill="#ececee" /><ellipse cx="24" cy="30.5" rx="2.6" ry="1.9" fill="#1b1b1f" />
-            </svg>
-            <span class="anim-toggle-name">Szop</span>
-            <span class="anim-toggle-state"></span>
-          </button>
-          <button class="anim-toggle" type="button" data-anim="verity" aria-pressed="true" title="Kulka w pudełku">
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <circle cx="24" cy="19" r="11" fill="#ffd93b" stroke="#e3b400" stroke-width="1.5" />
-              <ellipse cx="20.5" cy="17" rx="1.5" ry="2.4" fill="#2b2b2b" /><ellipse cx="27.5" cy="17" rx="1.5" ry="2.4" fill="#2b2b2b" />
-              <path d="M19 22 Q24 28 29 22" stroke="#2b2b2b" stroke-width="1.8" stroke-linecap="round" fill="none" />
-              <rect x="9" y="29" width="30" height="16" rx="1.5" fill="#c8935a" />
-              <rect x="21" y="29" width="6" height="16" fill="#e3c08c" />
-              <path d="M9 29 L3 24 M39 29 L45 24" stroke="#d9a86c" stroke-width="3" stroke-linecap="round" />
-            </svg>
-            <span class="anim-toggle-name">Kulka</span>
-            <span class="anim-toggle-state"></span>
-          </button>
-          <button class="anim-toggle" type="button" data-anim="spidey" aria-pressed="true" title="Spider-Man">
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <circle cx="24" cy="25" r="17" fill="#d9202b" />
-              <path d="M24 8 V42 M10 19 Q24 30 38 19 M8 28 Q24 40 40 28 M16 11 Q20 25 18 40 M32 11 Q28 25 30 40" stroke="#7a1015" stroke-width="0.9" fill="none" />
-              <path d="M11 24 Q17 15 23 23 Q19 32 11 24Z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round" />
-              <path d="M37 24 Q31 15 25 23 Q29 32 37 24Z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round" />
-            </svg>
-            <span class="anim-toggle-name">Spider-Man</span>
-            <span class="anim-toggle-state"></span>
-          </button>
-        </div>
+        <section class="settings-section" data-section="anims">
+          <button class="settings-section-head" type="button" aria-expanded="true"><span>Animacje pod spacją</span><svg class="icon settings-section-chevron" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 12 15 18 9" /></svg></button>
+          <div class="settings-section-body">
+          <p class="hint settings-hint">Kliknij ikonę, żeby włączyć lub wyłączyć animację.</p>
+          <div class="anim-toggles" id="animToggles">
+            <button class="anim-toggle" type="button" data-anim="raccoon" aria-pressed="true" title="Szop">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <circle cx="11" cy="14" r="6" fill="#8f8f96" /><circle cx="37" cy="14" r="6" fill="#8f8f96" />
+                <circle cx="11" cy="15" r="3" fill="#3a3a40" /><circle cx="37" cy="15" r="3" fill="#3a3a40" />
+                <ellipse cx="24" cy="26" rx="17" ry="15" fill="#9a9aa1" />
+                <path d="M9 24 C14 19 20 20 24 25 C28 20 34 19 39 24 C38 31 33 32 29 30 C26 29 25 27 24 27 C23 27 22 29 19 30 C15 32 10 31 9 24Z" fill="#2e2e34" />
+                <circle cx="17" cy="25" r="2.6" fill="#fff" /><circle cx="31" cy="25" r="2.6" fill="#fff" />
+                <ellipse cx="24" cy="33" rx="8" ry="5.5" fill="#ececee" /><ellipse cx="24" cy="30.5" rx="2.6" ry="1.9" fill="#1b1b1f" />
+              </svg>
+              <span class="anim-toggle-name">Szop</span>
+              <span class="anim-toggle-state"></span>
+            </button>
+            <button class="anim-toggle" type="button" data-anim="verity" aria-pressed="true" title="Kulka w pudełku">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <circle cx="24" cy="19" r="11" fill="#ffd93b" stroke="#e3b400" stroke-width="1.5" />
+                <ellipse cx="20.5" cy="17" rx="1.5" ry="2.4" fill="#2b2b2b" /><ellipse cx="27.5" cy="17" rx="1.5" ry="2.4" fill="#2b2b2b" />
+                <path d="M19 22 Q24 28 29 22" stroke="#2b2b2b" stroke-width="1.8" stroke-linecap="round" fill="none" />
+                <rect x="9" y="29" width="30" height="16" rx="1.5" fill="#c8935a" />
+                <rect x="21" y="29" width="6" height="16" fill="#e3c08c" />
+                <path d="M9 29 L3 24 M39 29 L45 24" stroke="#d9a86c" stroke-width="3" stroke-linecap="round" />
+              </svg>
+              <span class="anim-toggle-name">Kulka</span>
+              <span class="anim-toggle-state"></span>
+            </button>
+            <button class="anim-toggle" type="button" data-anim="spidey" aria-pressed="true" title="Spider-Man">
+              <svg viewBox="0 0 48 48" aria-hidden="true">
+                <circle cx="24" cy="25" r="17" fill="#d9202b" />
+                <path d="M24 8 V42 M10 19 Q24 30 38 19 M8 28 Q24 40 40 28 M16 11 Q20 25 18 40 M32 11 Q28 25 30 40" stroke="#7a1015" stroke-width="0.9" fill="none" />
+                <path d="M11 24 Q17 15 23 23 Q19 32 11 24Z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round" />
+                <path d="M37 24 Q31 15 25 23 Q29 32 37 24Z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round" />
+              </svg>
+              <span class="anim-toggle-name">Spider-Man</span>
+              <span class="anim-toggle-state"></span>
+            </button>
+          </div>
+          </div>
+        </section>
       </div>
     </div>
   </div>

@@ -764,6 +764,39 @@ document.addEventListener("keydown", (e) => {
   if (settingsPanel.classList.contains("fullscreen")) setPanelFullscreen(settingsPanel, settingsFullscreenBtn, false);
 });
 
+// ---------- Collapsible settings sections ----------
+
+const COLLAPSED_SECTIONS_KEY = "random-seat-navigo-collapsed-sections";
+let collapsedSections = new Set();
+try {
+  collapsedSections = new Set(JSON.parse(localStorage.getItem(COLLAPSED_SECTIONS_KEY) || "[]"));
+} catch {
+  // ignore a corrupted value — everything stays expanded
+}
+
+function applySectionState(section) {
+  const collapsed = collapsedSections.has(section.dataset.section);
+  section.classList.toggle("collapsed", collapsed);
+  section.querySelector(".settings-section-head").setAttribute("aria-expanded", String(!collapsed));
+}
+
+settingsPanel.querySelectorAll(".settings-section").forEach((section) => {
+  applySectionState(section);
+  section.querySelector(".settings-section-head").addEventListener("click", () => {
+    const id = section.dataset.section;
+    if (collapsedSections.has(id)) collapsedSections.delete(id);
+    else collapsedSections.add(id);
+    try {
+      localStorage.setItem(COLLAPSED_SECTIONS_KEY, JSON.stringify([...collapsedSections]));
+    } catch {
+      // ignore
+    }
+    applySectionState(section);
+    // tab pills inside a section that was hidden were measured at width 0
+    requestAnimationFrame(moveAllPills);
+  });
+});
+
 // ---------- Timer (minutnik) ----------
 
 const TIMER_DEFAULT_SECS = 5 * 60;
