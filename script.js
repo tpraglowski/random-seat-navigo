@@ -54,6 +54,8 @@ const speedTabPill = document.getElementById("speedTabPill");
 const priorityTabs = document.getElementById("priorityTabs");
 const priorityTabPill = document.getElementById("priorityTabPill");
 const effectsTabs = document.getElementById("effectsTabs");
+const axolotlTabs = document.getElementById("axolotlTabs");
+const axolotlTabPill = document.getElementById("axolotlTabPill");
 const effectsTabPill = document.getElementById("effectsTabPill");
 const leavesLayer = document.getElementById("leavesLayer");
 const todayDate = document.getElementById("todayDate");
@@ -507,6 +509,7 @@ function moveAllPills() {
   movePill(speedTabs, speedTabPill);
   movePill(priorityTabs, priorityTabPill);
   movePill(effectsTabs, effectsTabPill);
+  movePill(axolotlTabs, axolotlTabPill);
   movePill(groupModeTabs, groupModeTabPill);
 }
 
@@ -646,6 +649,39 @@ function stopLeaves() {
   leavesLayer.innerHTML = "";
 }
 
+// ---------- Pink axolotl on/off ----------
+
+const AXOLOTL_KEY = "random-seat-navigo-axolotl";
+// (an older build gave the axolotl a tile in the animation grid: honor that
+// choice once if nothing has been saved under the new key yet)
+let axolotlSetting = "on";
+try {
+  const saved = localStorage.getItem(AXOLOTL_KEY);
+  if (saved === "on" || saved === "off") axolotlSetting = saved;
+  else if ((JSON.parse(localStorage.getItem("random-seat-navigo-disabled-animations") || "[]") || []).includes("axolotl")) axolotlSetting = "off";
+} catch {
+  // ignore
+}
+
+function applyAxolotlSetting() {
+  axolotlTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.axolotl === axolotlSetting);
+  });
+  movePill(axolotlTabs, axolotlTabPill);
+}
+
+axolotlTabs.querySelectorAll(".mode-tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    axolotlSetting = btn.dataset.axolotl;
+    try {
+      localStorage.setItem(AXOLOTL_KEY, axolotlSetting);
+    } catch {
+      // ignore
+    }
+    applyAxolotlSetting();
+  });
+});
+
 function applyEffects() {
   if (specialEffects === "on") {
     document.documentElement.setAttribute("data-effects", "on");
@@ -731,6 +767,7 @@ applyTheme();
 applySpeed();
 applySeatPriority();
 applyEffects();
+applyAxolotlSetting();
 
 // ---------- Panel fullscreen toggle (timer + settings) ----------
 
@@ -1889,20 +1926,6 @@ createMemeAnimations({
   btn.innerHTML = `${meme.icon}<span class="anim-toggle-name">${meme.name}</span><span class="anim-toggle-state"></span>`;
   animToggles.appendChild(btn);
 });
-
-// The pink axolotl isn't part of the Space-bar pool — it appears on its own and
-// on Z — but it gets the same on/off tile so it can be switched off too.
-const axolotl = createAxolotl();
-{
-  const btn = document.createElement("button");
-  btn.className = "anim-toggle";
-  btn.type = "button";
-  btn.dataset.anim = axolotl.id;
-  btn.title = axolotl.title;
-  btn.setAttribute("aria-pressed", "true");
-  btn.innerHTML = `${axolotl.icon}<span class="anim-toggle-name">${axolotl.name}</span><span class="anim-toggle-state"></span>`;
-  animToggles.appendChild(btn);
-}
 let disabledAnimations = new Set();
 try {
   disabledAnimations = new Set(JSON.parse(localStorage.getItem(DISABLED_ANIMS_KEY) || "[]"));
@@ -1937,10 +1960,11 @@ animToggles.querySelectorAll(".anim-toggle").forEach((btn) => {
 });
 renderAnimToggles();
 
+const axolotl = createAxolotl();
 let axolotlBusy = false;
 
 function showAxolotl() {
-  if (axolotlBusy || disabledAnimations.has(axolotl.id)) return;
+  if (axolotlBusy || axolotlSetting !== "on") return;
   axolotlBusy = true;
   const ms = axolotl.play();
   setTimeout(() => {
