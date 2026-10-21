@@ -1,6 +1,6 @@
 import { firebaseConfig } from './firebase-config.js';
 import { ACCESS_CODE } from './access-config.js';
-import { createMemeAnimations } from './memes.js';
+import { createMemeAnimations, createAxolotl } from './memes.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js';
@@ -1889,6 +1889,20 @@ createMemeAnimations({
   btn.innerHTML = `${meme.icon}<span class="anim-toggle-name">${meme.name}</span><span class="anim-toggle-state"></span>`;
   animToggles.appendChild(btn);
 });
+
+// The pink axolotl isn't part of the Space-bar pool — it appears on its own and
+// on Z — but it gets the same on/off tile so it can be switched off too.
+const axolotl = createAxolotl();
+{
+  const btn = document.createElement("button");
+  btn.className = "anim-toggle";
+  btn.type = "button";
+  btn.dataset.anim = axolotl.id;
+  btn.title = axolotl.title;
+  btn.setAttribute("aria-pressed", "true");
+  btn.innerHTML = `${axolotl.icon}<span class="anim-toggle-name">${axolotl.name}</span><span class="anim-toggle-state"></span>`;
+  animToggles.appendChild(btn);
+}
 let disabledAnimations = new Set();
 try {
   disabledAnimations = new Set(JSON.parse(localStorage.getItem(DISABLED_ANIMS_KEY) || "[]"));
@@ -1922,6 +1936,40 @@ animToggles.querySelectorAll(".anim-toggle").forEach((btn) => {
   });
 });
 renderAnimToggles();
+
+let axolotlBusy = false;
+
+function showAxolotl() {
+  if (axolotlBusy || disabledAnimations.has(axolotl.id)) return;
+  axolotlBusy = true;
+  const ms = axolotl.play();
+  setTimeout(() => {
+    axolotlBusy = false;
+  }, ms + 100);
+}
+
+// An unprompted visit only happens when nothing else is going on: tab in
+// front, app unlocked, no dialog, no Space animation, no other axolotl.
+function scheduleAxolotl() {
+  setTimeout(() => {
+    if (
+      !document.hidden &&
+      !appRoot.classList.contains("hidden") &&
+      !isModalOpen() &&
+      !spaceAnimationPlaying
+    ) {
+      showAxolotl();
+    }
+    scheduleAxolotl();
+  }, 60000 + Math.random() * 90000);
+}
+scheduleAxolotl();
+
+document.addEventListener("keydown", (e) => {
+  if (e.code !== "KeyZ" || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (isTextEntryTarget(e.target) || appRoot.classList.contains("hidden") || isModalOpen()) return;
+  showAxolotl();
+});
 
 function playRandomSpaceAnimation() {
   if (spaceAnimationPlaying) return;

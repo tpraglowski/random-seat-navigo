@@ -186,6 +186,19 @@ const MEME_CSS = `
   85% { opacity: 1; transform: scale(1) translateY(-6px) rotate(var(--r)); }
   100% { opacity: 0; transform: scale(1) translateY(-12px) rotate(var(--r)); }
 }
+
+/* ---- Pink axolotl (not a Space meme: shows up by itself now and then, or on Z) ---- */
+.axo { position: absolute; will-change: transform; }
+.axo svg { display: block; width: 100%; height: auto; overflow: visible; }
+.axo-head { width: clamp(90px, 13vw, 150px); }
+.axo-body { top: 0; left: 0; width: clamp(130px, 20vw, 230px); }
+.axo-gill { animation: axo-gill 0.5s ease-in-out infinite alternate; }
+.axo-gill-r { animation-direction: alternate-reverse; }
+@keyframes axo-gill { from { transform: rotate(-9deg); } to { transform: rotate(9deg); } }
+.axo-tail { animation: axo-tail 0.35s ease-in-out infinite alternate; }
+@keyframes axo-tail { from { transform: rotate(-9deg); } to { transform: rotate(9deg); } }
+.axo-blink { animation: axo-blink 2.6s infinite; }
+@keyframes axo-blink { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(0.1); } }
 `;
 
 let styleInjected = false;
@@ -487,4 +500,157 @@ export function createMemeAnimations({ getAudioCtx }) {
       icon: icon(`<path d="M9 18 L11 4 L23 11 Z" fill="#d89a4a"/><path d="M39 18 L37 4 L25 11 Z" fill="#d89a4a"/><ellipse cx="24" cy="28" rx="18" ry="16" fill="#e0a85a"/><ellipse cx="24" cy="34" rx="12" ry="9" fill="#fbeed6"/><path d="M15 25 Q18 22 21 25 M27 25 Q30 22 33 25" stroke="#222" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="24" cy="31" rx="2.6" ry="1.8" fill="#222"/><path d="M24 33 V36 Q21 39 19 37 M24 36 Q27 39 29 37" stroke="#222" stroke-width="1.2" fill="none" stroke-linecap="round"/>`),
     },
   ];
+}
+
+// ---------------------------------------------------------------------------
+// Pink axolotl (the Minecraft leucistic one). Silent on purpose — it pops up
+// by itself every so often, and a hushing app shouldn't make noise unprompted.
+// play() picks one of: peek up from the bottom edge, peek in from a side edge,
+// or swim a loop-the-loop across the lower part of the screen.
+// ---------------------------------------------------------------------------
+export function createAxolotl() {
+  const PINK = "#f6b4ca";
+  const GILL = "#e8628a";
+  const gill = (d, ox, oy, right) =>
+    `<path class="axo-gill${right ? " axo-gill-r" : ""}" style="transform-origin:${ox}px ${oy}px" d="${d}" stroke="${GILL}" stroke-width="9" stroke-linecap="round" fill="none"/>`;
+
+  const headSvg = `<svg viewBox="0 0 150 120">
+    ${gill("M30 46 L8 22", 30, 46, false)}${gill("M24 62 L0 50", 24, 62, false)}${gill("M26 78 L4 80", 26, 78, false)}
+    ${gill("M120 46 L142 22", 120, 46, true)}${gill("M126 62 L150 50", 126, 62, true)}${gill("M124 78 L146 80", 124, 78, true)}
+    <circle cx="8" cy="22" r="5" fill="#f58fb0"/><circle cx="2" cy="50" r="5" fill="#f58fb0"/><circle cx="4" cy="80" r="5" fill="#f58fb0"/>
+    <circle cx="142" cy="22" r="5" fill="#f58fb0"/><circle cx="148" cy="50" r="5" fill="#f58fb0"/><circle cx="146" cy="80" r="5" fill="#f58fb0"/>
+    <path d="M22 72 Q22 30 75 28 Q128 30 128 72 Q128 108 75 110 Q22 108 22 72Z" fill="${PINK}"/>
+    <ellipse cx="75" cy="94" rx="42" ry="13" fill="#f1a2bd" opacity="0.55"/>
+    <circle cx="38" cy="80" r="6" fill="#ef7fa3" opacity="0.55"/><circle cx="112" cy="80" r="6" fill="#ef7fa3" opacity="0.55"/>
+    <g class="axo-blink" style="transform-origin:75px 62px">
+      <circle cx="52" cy="62" r="7" fill="#1b1b1b"/><circle cx="98" cy="62" r="7" fill="#1b1b1b"/>
+      <circle cx="54" cy="59.5" r="2.3" fill="#fff"/><circle cx="100" cy="59.5" r="2.3" fill="#fff"/>
+    </g>
+    <path d="M62 84 Q75 95 88 84" stroke="#a63d5c" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </svg>`;
+
+  const bodySvg = `<svg viewBox="0 0 220 100">
+    <g class="axo-tail" style="transform-origin:82px 52px"><path d="M84 42 Q44 22 6 50 Q44 72 84 64 Z" fill="${PINK}"/><path d="M60 40 Q42 24 26 34" stroke="${GILL}" stroke-width="5" stroke-linecap="round" fill="none"/></g>
+    <rect x="86" y="68" width="13" height="18" rx="6" fill="#f0a2bd"/><rect x="140" y="68" width="13" height="18" rx="6" fill="#f0a2bd"/>
+    <ellipse cx="116" cy="54" rx="50" ry="22" fill="${PINK}"/>
+    <ellipse cx="118" cy="63" rx="38" ry="9" fill="#fbd3e0"/>
+    <rect x="104" y="68" width="13" height="18" rx="6" fill="#f6a9c1"/><rect x="124" y="68" width="13" height="18" rx="6" fill="#f6a9c1"/>
+    <path class="axo-gill" style="transform-origin:138px 40px" d="M138 40 L118 14" stroke="${GILL}" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path class="axo-gill axo-gill-r" style="transform-origin:134px 47px" d="M134 47 L108 30" stroke="${GILL}" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path class="axo-gill" style="transform-origin:134px 55px" d="M134 55 L106 48" stroke="${GILL}" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <ellipse cx="164" cy="50" rx="32" ry="24" fill="${PINK}"/>
+    <circle cx="160" cy="62" r="6" fill="#ef7fa3" opacity="0.55"/>
+    <g class="axo-blink" style="transform-origin:172px 46px"><circle cx="172" cy="46" r="5.5" fill="#1b1b1b"/><circle cx="173.6" cy="44.2" r="1.7" fill="#fff"/></g>
+    <path d="M174 62 Q183 69 192 60" stroke="#a63d5c" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+  </svg>`;
+
+  // --- variant 1: head pops up from the bottom edge, sways, ducks back ---
+  function peekBottom() {
+    const ms = 2800;
+    const root = mount(`<div class="axo axo-head" style="left:${rand(12, 88).toFixed(1)}%;bottom:0;transform:translate(-50%,105%)">${headSvg}</div>`, ms);
+    root.firstElementChild.animate(
+      [
+        { transform: "translate(-50%,105%) rotate(0deg)", offset: 0, easing: "cubic-bezier(0.2,1.5,0.4,1)" },
+        { transform: "translate(-50%,6%) rotate(0deg)", offset: 0.22, easing: "ease-in-out" },
+        { transform: "translate(-50%,6%) rotate(-7deg)", offset: 0.38, easing: "ease-in-out" },
+        { transform: "translate(-50%,6%) rotate(7deg)", offset: 0.54, easing: "ease-in-out" },
+        { transform: "translate(-50%,6%) rotate(0deg)", offset: 0.72, easing: "ease-in" },
+        { transform: "translate(-50%,105%) rotate(0deg)", offset: 1 },
+      ],
+      { duration: ms, fill: "forwards" }
+    );
+    return ms;
+  }
+
+  // --- variant 2: head leans in from the left or right edge ---
+  function peekSide() {
+    const ms = 2800;
+    const side = Math.random() < 0.5 ? -1 : 1; // -1 = left edge, 1 = right edge
+    const hidden = side < 0 ? "-100%" : "0%";
+    const shown = side < 0 ? "-26%" : "-74%";
+    const tilt = side < 0 ? 16 : -16;
+    const root = mount(
+      `<div class="axo axo-head" style="top:${rand(22, 68).toFixed(1)}%;left:${side < 0 ? "0" : "100%"};transform:translate(${hidden},-50%)">${headSvg}</div>`,
+      ms
+    );
+    root.firstElementChild.animate(
+      [
+        { transform: `translate(${hidden},-50%) rotate(${tilt}deg)`, offset: 0, easing: "cubic-bezier(0.2,1.5,0.4,1)" },
+        { transform: `translate(${shown},-50%) rotate(${tilt}deg)`, offset: 0.24, easing: "ease-in-out" },
+        { transform: `translate(${shown},-50%) rotate(${tilt - 8}deg)`, offset: 0.4, easing: "ease-in-out" },
+        { transform: `translate(${shown},-50%) rotate(${tilt + 6}deg)`, offset: 0.56, easing: "ease-in-out" },
+        { transform: `translate(${shown},-50%) rotate(${tilt}deg)`, offset: 0.72, easing: "ease-in" },
+        { transform: `translate(${hidden},-50%) rotate(${tilt}deg)`, offset: 1 },
+      ],
+      { duration: ms, fill: "forwards" }
+    );
+    return ms;
+  }
+
+  // --- variant 3: swims in, does one loop-the-loop, swims out ---
+  function swimLoop() {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const dir = Math.random() < 0.5 ? 1 : -1; // 1 = left-to-right
+    const root = mount(`<div class="axo axo-body">${bodySvg}</div>`, 6000);
+    const el = root.firstElementChild;
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+
+    const y0 = H * 0.8;
+    const R = Math.min(H * 0.17, W * 0.13);
+    const cx = W * rand(0.38, 0.62);
+    const startX = -w;
+    const endX = W + w;
+    const L1 = cx - startX;
+    const loopLen = 2 * Math.PI * R;
+    const L2 = endX - cx;
+    const total = L1 + loopLen + L2;
+    const ms = Math.min(5600, Math.max(3400, (total / Math.max(380, W * 0.42)) * 1000));
+
+    const frames = [];
+    const N = 90;
+    for (let i = 0; i <= N; i++) {
+      const sDist = (i / N) * total;
+      let x;
+      let y;
+      let deg;
+      if (sDist < L1) {
+        x = startX + sDist;
+        y = y0;
+        deg = 0;
+      } else if (sDist < L1 + loopLen) {
+        const phi = (sDist - L1) / R; // 0..2π, counter-clockwise around the circle
+        x = cx + R * Math.sin(phi);
+        y = y0 - R + R * Math.cos(phi);
+        deg = (-phi * 180) / Math.PI;
+      } else {
+        x = cx + (sDist - L1 - loopLen);
+        y = y0;
+        deg = -360;
+      }
+      // right-to-left is the mirror image: flip x and the sprite, reverse the turn
+      const px = dir > 0 ? x : W - x;
+      const rot = dir > 0 ? deg : -deg;
+      frames.push({
+        transform: `translate(${(px - w / 2).toFixed(1)}px,${(y - h / 2).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${dir},1)`,
+        offset: i / N,
+      });
+    }
+    el.animate(frames, { duration: ms, easing: "linear", fill: "forwards" });
+    return ms;
+  }
+
+  const variants = [peekBottom, peekSide, swimLoop];
+  const iconBody = `<g stroke="${GILL}" stroke-width="3.4" stroke-linecap="round" fill="none"><path d="M12 22 L4 12"/><path d="M10 28 L1 25"/><path d="M12 34 L3 36"/><path d="M36 22 L44 12"/><path d="M38 28 L47 25"/><path d="M36 34 L45 36"/></g><circle cx="4" cy="12" r="2.4" fill="#f58fb0"/><circle cx="44" cy="12" r="2.4" fill="#f58fb0"/><path d="M10 31 Q10 15 24 14 Q38 15 38 31 Q38 44 24 45 Q10 44 10 31Z" fill="${PINK}"/><circle cx="18" cy="28" r="2.6" fill="#1b1b1b"/><circle cx="30" cy="28" r="2.6" fill="#1b1b1b"/><circle cx="18.8" cy="27" r="0.9" fill="#fff"/><circle cx="30.8" cy="27" r="0.9" fill="#fff"/><path d="M20 36 Q24 40 28 36" stroke="#a63d5c" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+
+  return {
+    id: "axolotl",
+    name: "Aksolotl",
+    title: "Różowy aksolotl (klawisz Z)",
+    icon: `<svg viewBox="0 0 48 48" aria-hidden="true">${iconBody}</svg>`,
+    play() {
+      return variants[Math.floor(rand(0, variants.length))]();
+    },
+  };
 }
