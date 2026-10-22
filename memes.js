@@ -191,10 +191,8 @@ const MEME_CSS = `
 /* Pixel art, 50x32 source px (includes 4px of empty margin). --px is the on-screen size of one source pixel. */
 .axo { position: absolute; --px: clamp(3px, 0.52vw, 5px); will-change: transform; }
 .axo-front { width: calc(50 * var(--px)); }
-.axo-sway { animation: axo-sway 0.55s ease-in-out infinite alternate; }
-@keyframes axo-sway { from { transform: rotate(-3deg) translateY(2%); } to { transform: rotate(3deg) translateY(-2%); } }
 .axo-sprite { display: block; width: 100%; image-rendering: pixelated; user-select: none; }
-.axo-front .axo-sprite { aspect-ratio: 50 / 32; background: url("axolotl-front.png") 0 0 / 100% 100% no-repeat; }
+.axo-front .axo-sprite { aspect-ratio: 50 / 32; background: url("axolotl-pink.png") 0 0 / 100% 100% no-repeat; }
 `;
 
 let styleInjected = false;
@@ -500,19 +498,19 @@ export function createMemeAnimations({ getAudioCtx }) {
 
 // ---------------------------------------------------------------------------
 // Pink axolotl (the Minecraft leucistic one), as 2D pixel art seen from the
-// FRONT (axolotl-front.png). It only ever peeks in. Silent on
+// FRONT (axolotl-pink.png, one still picture). It only ever peeks in. Silent on
 // purpose — it pops up by itself every so often, and a hushing app shouldn't
 // make noise unprompted. play() picks one of: head peeking up from the bottom
 // edge, or head leaning in from a side edge.
 // ---------------------------------------------------------------------------
 export function createAxolotl() {
-  const FRONT = "axolotl-front.png";
+  const FRONT = "axolotl-pink.png";
   new Image().src = FRONT; // warm the cache so it's there the first time
 
-  // the picture itself comes from CSS (.axo-front picks the strip)
-  const sprite = () => `<div class="axo-sway"><div class="axo-sprite"></div></div>`;
+  // the picture itself comes from CSS (one still picture, no animation of its own)
+  const sprite = () => `<div class="axo-sprite"></div>`;
 
-  // --- variant 1: front view, pops up from the bottom edge, sways, ducks back ---
+  // --- variant 1: front view, pops up from the bottom edge, holds still, ducks back ---
   function peekBottom() {
     const ms = 2800;
     const root = mount(
@@ -523,8 +521,6 @@ export function createAxolotl() {
       [
         { transform: "translate(-50%,105%) rotate(0deg)", offset: 0, easing: "cubic-bezier(0.2,1.5,0.4,1)" },
         { transform: "translate(-50%,14%) rotate(0deg)", offset: 0.22, easing: "ease-in-out" },
-        { transform: "translate(-50%,14%) rotate(-6deg)", offset: 0.38, easing: "ease-in-out" },
-        { transform: "translate(-50%,14%) rotate(6deg)", offset: 0.54, easing: "ease-in-out" },
         { transform: "translate(-50%,14%) rotate(0deg)", offset: 0.72, easing: "ease-in" },
         { transform: "translate(-50%,105%) rotate(0deg)", offset: 1 },
       ],
@@ -548,8 +544,6 @@ export function createAxolotl() {
       [
         { transform: `translate(${hidden},-50%) rotate(${tilt}deg)`, offset: 0, easing: "cubic-bezier(0.2,1.5,0.4,1)" },
         { transform: `translate(${shown},-50%) rotate(${tilt}deg)`, offset: 0.24, easing: "ease-in-out" },
-        { transform: `translate(${shown},-50%) rotate(${tilt - 6}deg)`, offset: 0.4, easing: "ease-in-out" },
-        { transform: `translate(${shown},-50%) rotate(${tilt + 5}deg)`, offset: 0.56, easing: "ease-in-out" },
         { transform: `translate(${shown},-50%) rotate(${tilt}deg)`, offset: 0.72, easing: "ease-in" },
         { transform: `translate(${hidden},-50%) rotate(${tilt}deg)`, offset: 1 },
       ],

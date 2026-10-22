@@ -26,7 +26,7 @@ jobs:
           ACCESS_CODE: ${{ secrets.ACCESS_CODE }}
         run: |
           mkdir -p dist
-          cp index.html script.js memes.js styles.css favicon.svg axolotl-front.png firebase-config.js dist/
+          cp index.html script.js memes.js styles.css favicon.svg axolotl-pink.png firebase-config.js dist/
           cat > dist/access-config.js <<EOF
           export const ACCESS_CODE = '${ACCESS_CODE}';
           EOF
