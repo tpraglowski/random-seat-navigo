@@ -188,13 +188,12 @@ const MEME_CSS = `
 }
 
 /* ---- Pink axolotl (not a Space meme: shows up by itself now and then, or on Z) ---- */
-/* Pixel art. Each sprite is a 4-frame strip [rest, +, rest, -] with the tail
-   waving / gills flapping; the front strip is 50x32 source px per frame, the
-   side strip 89x32 (both include 4px of empty margin so moving pixels fit).
+/* Pixel art: a 4-frame strip [rest, +, rest, -] with flapping
+   gills; 50x32 source px per frame (includes 4px of empty margin so
+   moving pixels fit).
    --px is the on-screen size of one source pixel. */
 .axo { position: absolute; --px: clamp(3px, 0.52vw, 5px); will-change: transform; }
 .axo-front { width: calc(50 * var(--px)); }
-.axo-side { width: calc(89 * var(--px)); }
 .axo-sway { animation: axo-sway 0.55s ease-in-out infinite alternate; }
 @keyframes axo-sway { from { transform: rotate(-3deg) translateY(2%); } to { transform: rotate(3deg) translateY(-2%); } }
 .axo-sprite {
@@ -202,7 +201,6 @@ const MEME_CSS = `
   image-rendering: pixelated; user-select: none; animation: axo-flap 0.72s steps(1, end) infinite;
 }
 .axo-front .axo-sprite { aspect-ratio: 50 / 32; background-image: url("axolotl-front.png"); }
-.axo-side .axo-sprite { aspect-ratio: 89 / 32; background-image: url("axolotl-side.png"); }
 @keyframes axo-flap {
   0% { background-position: 0% 0; }
   25% { background-position: 33.3333% 0; }
@@ -513,20 +511,17 @@ export function createMemeAnimations({ getAudioCtx }) {
 }
 
 // ---------------------------------------------------------------------------
-// Pink axolotl (the Minecraft leucistic one), as 2D pixel art in two views:
-// seen from the FRONT when it peeks out (axolotl-front.png) and from the SIDE
-// when it swims (axolotl-side.png, facing left). Silent on purpose — it pops
-// up by itself every so often, and a hushing app shouldn't make noise
-// unprompted. play() picks one of: head peeking up from the bottom edge, head
-// leaning in from a side edge, or a swim with a loop-the-loop ("salto").
+// Pink axolotl (the Minecraft leucistic one), as 2D pixel art seen from the
+// FRONT (axolotl-front.png, gills flapping). It only ever peeks in. Silent on
+// purpose — it pops up by itself every so often, and a hushing app shouldn't
+// make noise unprompted. play() picks one of: head peeking up from the bottom
+// edge, or head leaning in from a side edge.
 // ---------------------------------------------------------------------------
 export function createAxolotl() {
   const FRONT = "axolotl-front.png";
-  const SIDE = "axolotl-side.png";
-  new Image().src = FRONT; // warm the cache so they're there the first time
-  new Image().src = SIDE;
+  new Image().src = FRONT; // warm the cache so it's there the first time
 
-  // the picture itself comes from CSS (.axo-front / .axo-side pick the strip)
+  // the picture itself comes from CSS (.axo-front picks the strip)
   const sprite = () => `<div class="axo-sway"><div class="axo-sprite"></div></div>`;
 
   // --- variant 1: front view, pops up from the bottom edge, sways, ducks back ---
@@ -575,65 +570,7 @@ export function createAxolotl() {
     return ms;
   }
 
-  // --- variant 3: side view, swims in, does one loop-the-loop, swims out ---
-  function swimLoop() {
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-    const dir = Math.random() < 0.5 ? 1 : -1; // 1 = left-to-right
-    const root = mount(`<div class="axo axo-side" style="top:0;left:0">${sprite()}</div>`, 6000);
-    const el = root.firstElementChild;
-    const w = el.offsetWidth;
-    const h = el.offsetHeight;
-
-    const y0 = H * 0.82;
-    // the body is long (about 3.4x as long as it is tall), so the loop has to
-    // be sized to it or it would look like a stick spinning; capped so the top
-    // of the loop stays on screen
-    const R = Math.min(H * 0.26, Math.max(Math.min(H * 0.17, W * 0.13), w * 0.45));
-    const cx = W * rand(0.38, 0.62);
-    const startX = -w;
-    const endX = W + w;
-    const L1 = cx - startX;
-    const loopLen = 2 * Math.PI * R;
-    const L2 = endX - cx;
-    const total = L1 + loopLen + L2;
-    const ms = Math.min(5600, Math.max(3400, (total / Math.max(380, W * 0.42)) * 1000));
-
-    const frames = [];
-    const N = 90;
-    for (let i = 0; i <= N; i++) {
-      const sDist = (i / N) * total;
-      let x;
-      let y;
-      let deg;
-      if (sDist < L1) {
-        x = startX + sDist;
-        y = y0;
-        deg = 0;
-      } else if (sDist < L1 + loopLen) {
-        const phi = (sDist - L1) / R; // 0..2π, counter-clockwise around the circle
-        x = cx + R * Math.sin(phi);
-        y = y0 - R + R * Math.cos(phi);
-        deg = (-phi * 180) / Math.PI;
-      } else {
-        x = cx + (sDist - L1 - loopLen);
-        y = y0;
-        deg = -360;
-      }
-      // right-to-left is the mirror image: flip x and reverse the turn. The
-      // sprite faces left, so it is flipped (scaleX(-1)) when heading right.
-      const px = dir > 0 ? x : W - x;
-      const rot = dir > 0 ? deg : -deg;
-      frames.push({
-        transform: `translate(${(px - w / 2).toFixed(1)}px,${(y - h / 2).toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${-dir},1)`,
-        offset: i / N,
-      });
-    }
-    el.animate(frames, { duration: ms, easing: "linear", fill: "forwards" });
-    return ms;
-  }
-
-  const variants = [peekBottom, peekSide, swimLoop];
+  const variants = [peekBottom, peekSide];
   return {
     play() {
       return variants[Math.floor(rand(0, variants.length))]();
