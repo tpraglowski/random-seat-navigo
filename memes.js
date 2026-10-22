@@ -188,15 +188,27 @@ const MEME_CSS = `
 }
 
 /* ---- Pink axolotl (not a Space meme: shows up by itself now and then, or on Z) ---- */
-/* Pixel art: the front head is 42x24, the side body 81x24 source pixels; --px is the on-screen size of one of them. */
+/* Pixel art. Each sprite is a 4-frame strip [rest, +, rest, -] with the tail
+   waving / gills flapping; the front strip is 50x32 source px per frame, the
+   side strip 89x32 (both include 4px of empty margin so moving pixels fit).
+   --px is the on-screen size of one source pixel. */
 .axo { position: absolute; --px: clamp(3px, 0.52vw, 5px); will-change: transform; }
-.axo-front { width: calc(42 * var(--px)); }
-.axo-side { width: calc(81 * var(--px)); }
+.axo-front { width: calc(50 * var(--px)); }
+.axo-side { width: calc(89 * var(--px)); }
 .axo-sway { animation: axo-sway 0.55s ease-in-out infinite alternate; }
 @keyframes axo-sway { from { transform: rotate(-3deg) translateY(2%); } to { transform: rotate(3deg) translateY(-2%); } }
-.axo-img { display: block; width: 100%; height: auto; image-rendering: pixelated; user-select: none; }
-.axo-front .axo-img { aspect-ratio: 42 / 24; }
-.axo-side .axo-img { aspect-ratio: 81 / 24; }
+.axo-sprite {
+  display: block; width: 100%; background-repeat: no-repeat; background-size: 400% 100%;
+  image-rendering: pixelated; user-select: none; animation: axo-flap 0.72s steps(1, end) infinite;
+}
+.axo-front .axo-sprite { aspect-ratio: 50 / 32; background-image: url("axolotl-front.png"); }
+.axo-side .axo-sprite { aspect-ratio: 89 / 32; background-image: url("axolotl-side.png"); }
+@keyframes axo-flap {
+  0% { background-position: 0% 0; }
+  25% { background-position: 33.3333% 0; }
+  50% { background-position: 66.6667% 0; }
+  75%, 100% { background-position: 100% 0; }
+}
 `;
 
 let styleInjected = false;
@@ -514,14 +526,14 @@ export function createAxolotl() {
   new Image().src = FRONT; // warm the cache so they're there the first time
   new Image().src = SIDE;
 
-  const sprite = (src) =>
-    `<div class="axo-sway"><img class="axo-img" src="${src}" alt="" draggable="false"></div>`;
+  // the picture itself comes from CSS (.axo-front / .axo-side pick the strip)
+  const sprite = () => `<div class="axo-sway"><div class="axo-sprite"></div></div>`;
 
   // --- variant 1: front view, pops up from the bottom edge, sways, ducks back ---
   function peekBottom() {
     const ms = 2800;
     const root = mount(
-      `<div class="axo axo-front" style="left:${rand(15, 85).toFixed(1)}%;bottom:0;transform:translate(-50%,105%)">${sprite(FRONT)}</div>`,
+      `<div class="axo axo-front" style="left:${rand(15, 85).toFixed(1)}%;bottom:0;transform:translate(-50%,105%)">${sprite()}</div>`,
       ms
     );
     root.firstElementChild.animate(
@@ -546,7 +558,7 @@ export function createAxolotl() {
     const shown = side < 0 ? "-34%" : "-66%"; // ~2/3 of the head ends up on screen
     const tilt = side < 0 ? 9 : -9;
     const root = mount(
-      `<div class="axo axo-front" style="top:${rand(22, 68).toFixed(1)}%;left:${side < 0 ? "0" : "100%"};transform:translate(${hidden},-50%)">${sprite(FRONT)}</div>`,
+      `<div class="axo axo-front" style="top:${rand(22, 68).toFixed(1)}%;left:${side < 0 ? "0" : "100%"};transform:translate(${hidden},-50%)">${sprite()}</div>`,
       ms
     );
     root.firstElementChild.animate(
@@ -568,7 +580,7 @@ export function createAxolotl() {
     const W = window.innerWidth;
     const H = window.innerHeight;
     const dir = Math.random() < 0.5 ? 1 : -1; // 1 = left-to-right
-    const root = mount(`<div class="axo axo-side" style="top:0;left:0">${sprite(SIDE)}</div>`, 6000);
+    const root = mount(`<div class="axo axo-side" style="top:0;left:0">${sprite()}</div>`, 6000);
     const el = root.firstElementChild;
     const w = el.offsetWidth;
     const h = el.offsetHeight;
