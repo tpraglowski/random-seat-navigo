@@ -188,25 +188,13 @@ const MEME_CSS = `
 }
 
 /* ---- Pink axolotl (not a Space meme: shows up by itself now and then, or on Z) ---- */
-/* Pixel art: a 4-frame strip [rest, +, rest, -] with flapping
-   gills; 50x32 source px per frame (includes 4px of empty margin so
-   moving pixels fit).
-   --px is the on-screen size of one source pixel. */
+/* Pixel art, 50x32 source px (includes 4px of empty margin). --px is the on-screen size of one source pixel. */
 .axo { position: absolute; --px: clamp(3px, 0.52vw, 5px); will-change: transform; }
 .axo-front { width: calc(50 * var(--px)); }
 .axo-sway { animation: axo-sway 0.55s ease-in-out infinite alternate; }
 @keyframes axo-sway { from { transform: rotate(-3deg) translateY(2%); } to { transform: rotate(3deg) translateY(-2%); } }
-.axo-sprite {
-  display: block; width: 100%; background-repeat: no-repeat; background-size: 400% 100%;
-  image-rendering: pixelated; user-select: none; animation: axo-flap 0.72s steps(1, end) infinite;
-}
-.axo-front .axo-sprite { aspect-ratio: 50 / 32; background-image: url("axolotl-front.png"); }
-@keyframes axo-flap {
-  0% { background-position: 0% 0; }
-  25% { background-position: 33.3333% 0; }
-  50% { background-position: 66.6667% 0; }
-  75%, 100% { background-position: 100% 0; }
-}
+.axo-sprite { display: block; width: 100%; image-rendering: pixelated; user-select: none; }
+.axo-front .axo-sprite { aspect-ratio: 50 / 32; background: url("axolotl-front.png") 0 0 / 100% 100% no-repeat; }
 `;
 
 let styleInjected = false;
@@ -512,7 +500,7 @@ export function createMemeAnimations({ getAudioCtx }) {
 
 // ---------------------------------------------------------------------------
 // Pink axolotl (the Minecraft leucistic one), as 2D pixel art seen from the
-// FRONT (axolotl-front.png, gills flapping). It only ever peeks in. Silent on
+// FRONT (axolotl-front.png). It only ever peeks in. Silent on
 // purpose — it pops up by itself every so often, and a hushing app shouldn't
 // make noise unprompted. play() picks one of: head peeking up from the bottom
 // edge, or head leaning in from a side edge.
