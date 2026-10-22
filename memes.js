@@ -188,10 +188,15 @@ const MEME_CSS = `
 }
 
 /* ---- Pink axolotl (not a Space meme: shows up by itself now and then, or on Z) ---- */
-.axo { position: absolute; width: clamp(150px, 22vw, 260px); will-change: transform; }
+/* Pixel art: the front head is 42x24, the side body 81x24 source pixels; --px is the on-screen size of one of them. */
+.axo { position: absolute; --px: clamp(3px, 0.52vw, 5px); will-change: transform; }
+.axo-front { width: calc(42 * var(--px)); }
+.axo-side { width: calc(81 * var(--px)); }
 .axo-sway { animation: axo-sway 0.55s ease-in-out infinite alternate; }
-@keyframes axo-sway { from { transform: rotate(-3deg) translateY(1%); } to { transform: rotate(3deg) translateY(-1%); } }
-.axo-img { display: block; width: 100%; aspect-ratio: 216 / 137; user-select: none; }
+@keyframes axo-sway { from { transform: rotate(-3deg) translateY(2%); } to { transform: rotate(3deg) translateY(-2%); } }
+.axo-img { display: block; width: 100%; height: auto; image-rendering: pixelated; user-select: none; }
+.axo-front .axo-img { aspect-ratio: 42 / 24; }
+.axo-side .axo-img { aspect-ratio: 81 / 24; }
 `;
 
 let styleInjected = false;
@@ -496,34 +501,36 @@ export function createMemeAnimations({ getAudioCtx }) {
 }
 
 // ---------------------------------------------------------------------------
-// Pink axolotl (the Minecraft leucistic one), drawn from the supplied
-// axolotl.png. Silent on purpose — it pops up by itself every so often, and a
-// hushing app shouldn't make noise unprompted. The sprite faces LEFT. play()
-// picks one of: head peeking up from the bottom edge, head leaning in from a
-// side edge, or a swim with a loop-the-loop across the lower part of the screen.
+// Pink axolotl (the Minecraft leucistic one), as 2D pixel art in two views:
+// seen from the FRONT when it peeks out (axolotl-front.png) and from the SIDE
+// when it swims (axolotl-side.png, facing left). Silent on purpose — it pops
+// up by itself every so often, and a hushing app shouldn't make noise
+// unprompted. play() picks one of: head peeking up from the bottom edge, head
+// leaning in from a side edge, or a swim with a loop-the-loop ("salto").
 // ---------------------------------------------------------------------------
 export function createAxolotl() {
-  const IMG = "axolotl.png";
-  new Image().src = IMG; // warm the cache so it's there the first time it's needed
+  const FRONT = "axolotl-front.png";
+  const SIDE = "axolotl-side.png";
+  new Image().src = FRONT; // warm the cache so they're there the first time
+  new Image().src = SIDE;
 
-  const sprite = (flipped) =>
-    `<div class="axo-sway"><img class="axo-img" src="${IMG}" alt="" draggable="false"${flipped ? ' style="transform:scaleX(-1)"' : ""}></div>`;
+  const sprite = (src) =>
+    `<div class="axo-sway"><img class="axo-img" src="${src}" alt="" draggable="false"></div>`;
 
-  // --- variant 1: pops up from the bottom edge, sways, ducks back ---
+  // --- variant 1: front view, pops up from the bottom edge, sways, ducks back ---
   function peekBottom() {
     const ms = 2800;
-    const flipped = Math.random() < 0.5;
     const root = mount(
-      `<div class="axo" style="left:${rand(15, 85).toFixed(1)}%;bottom:0;transform:translate(-50%,105%)">${sprite(flipped)}</div>`,
+      `<div class="axo axo-front" style="left:${rand(15, 85).toFixed(1)}%;bottom:0;transform:translate(-50%,105%)">${sprite(FRONT)}</div>`,
       ms
     );
     root.firstElementChild.animate(
       [
         { transform: "translate(-50%,105%) rotate(0deg)", offset: 0, easing: "cubic-bezier(0.2,1.5,0.4,1)" },
-        { transform: "translate(-50%,36%) rotate(0deg)", offset: 0.22, easing: "ease-in-out" },
-        { transform: "translate(-50%,36%) rotate(-6deg)", offset: 0.38, easing: "ease-in-out" },
-        { transform: "translate(-50%,36%) rotate(6deg)", offset: 0.54, easing: "ease-in-out" },
-        { transform: "translate(-50%,36%) rotate(0deg)", offset: 0.72, easing: "ease-in" },
+        { transform: "translate(-50%,14%) rotate(0deg)", offset: 0.22, easing: "ease-in-out" },
+        { transform: "translate(-50%,14%) rotate(-6deg)", offset: 0.38, easing: "ease-in-out" },
+        { transform: "translate(-50%,14%) rotate(6deg)", offset: 0.54, easing: "ease-in-out" },
+        { transform: "translate(-50%,14%) rotate(0deg)", offset: 0.72, easing: "ease-in" },
         { transform: "translate(-50%,105%) rotate(0deg)", offset: 1 },
       ],
       { duration: ms, fill: "forwards" }
@@ -531,17 +538,15 @@ export function createAxolotl() {
     return ms;
   }
 
-  // --- variant 2: head leans in from the left or right edge ---
+  // --- variant 2: front view, leans in from the left or right edge ---
   function peekSide() {
     const ms = 2800;
     const side = Math.random() < 0.5 ? -1 : 1; // -1 = left edge, 1 = right edge
-    // Head-first: the head is on the sprite's left, so on the right edge it is
-    // used as-is and on the left edge it is mirrored.
     const hidden = side < 0 ? "-100%" : "0%";
-    const shown = side < 0 ? "-52%" : "-48%";
-    const tilt = side < 0 ? 8 : -8;
+    const shown = side < 0 ? "-34%" : "-66%"; // ~2/3 of the head ends up on screen
+    const tilt = side < 0 ? 9 : -9;
     const root = mount(
-      `<div class="axo" style="top:${rand(22, 68).toFixed(1)}%;left:${side < 0 ? "0" : "100%"};transform:translate(${hidden},-50%)">${sprite(side < 0)}</div>`,
+      `<div class="axo axo-front" style="top:${rand(22, 68).toFixed(1)}%;left:${side < 0 ? "0" : "100%"};transform:translate(${hidden},-50%)">${sprite(FRONT)}</div>`,
       ms
     );
     root.firstElementChild.animate(
@@ -558,18 +563,21 @@ export function createAxolotl() {
     return ms;
   }
 
-  // --- variant 3: swims in, does one loop-the-loop, swims out ---
+  // --- variant 3: side view, swims in, does one loop-the-loop, swims out ---
   function swimLoop() {
     const W = window.innerWidth;
     const H = window.innerHeight;
     const dir = Math.random() < 0.5 ? 1 : -1; // 1 = left-to-right
-    const root = mount(`<div class="axo" style="top:0;left:0">${sprite(false)}</div>`, 6000);
+    const root = mount(`<div class="axo axo-side" style="top:0;left:0">${sprite(SIDE)}</div>`, 6000);
     const el = root.firstElementChild;
     const w = el.offsetWidth;
     const h = el.offsetHeight;
 
-    const y0 = H * 0.8;
-    const R = Math.min(H * 0.17, W * 0.13);
+    const y0 = H * 0.82;
+    // the body is long (about 3.4x as long as it is tall), so the loop has to
+    // be sized to it or it would look like a stick spinning; capped so the top
+    // of the loop stays on screen
+    const R = Math.min(H * 0.26, Math.max(Math.min(H * 0.17, W * 0.13), w * 0.45));
     const cx = W * rand(0.38, 0.62);
     const startX = -w;
     const endX = W + w;
