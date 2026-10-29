@@ -1503,3 +1503,50 @@ textarea {
   0% { transform: translate(0, 0) rotate(0deg); }
   100% { transform: translate(var(--drift), 110vh) rotate(var(--spin)); }
 }
+
+/* ---------- Halloween: full-screen video that fades in from black ---------- */
+.halloween-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: #000;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+  cursor: none;
+  user-select: none;
+}
+.halloween-overlay.dark { opacity: 1; }
+.halloween-overlay video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.5s ease;
+}
+.halloween-overlay.video-in video { opacity: 1; }
+
+.halloween-note {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 400;
+  translate: -50% -50%;
+  max-width: 90vw;
+  padding: 0.7em 1.2em;
+  border: 3px solid #ff8a1f;
+  border-radius: 20px;
+  background: rgba(28, 12, 0, 0.9);
+  color: #ff8a1f;
+  font-size: clamp(22px, 5vw, 52px);
+  font-weight: 800;
+  text-align: center;
+  text-shadow: 0 0 14px rgba(255, 138, 31, 0.7);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  animation: halloween-note-in 0.8s ease both;
+}
+.halloween-note.hidden { display: none; }
+@keyframes halloween-note-in { from { opacity: 0; } to { opacity: 1; } }

@@ -1590,6 +1590,10 @@ namesInput.addEventListener("input", () => {
 });
 
 shuffleBtn.addEventListener("click", () => {
+  if (halloweenActive()) {
+    playHalloween();
+    return;
+  }
   if (currentMode === "person") pickPerson();
   else if (currentMode === "groups") shuffleGroups();
   else shuffleSeats();
@@ -1980,7 +1984,8 @@ function scheduleAxolotl() {
       !document.hidden &&
       !appRoot.classList.contains("hidden") &&
       !isModalOpen() &&
-      !spaceAnimationPlaying
+      !spaceAnimationPlaying &&
+      !halloweenPlaying
     ) {
       showAxolotl();
     }
@@ -2051,6 +2056,114 @@ document.addEventListener("keyup", (e) => {
   if (spaceShouldTrigger(e)) e.preventDefault();
 });
 
+// ---------- Halloween (Thu 29 Oct – Sun 1 Nov 2026) ----------
+// In that window Losuj doesn't draw: the screen fades to black, a video plays
+// on its own (no controls, can't be stopped) and is cut off after 20 s, the
+// screen goes black again and fades back to the page, where "Dzisiaj siedzicie
+// jak chcecie" stays in the middle for 15 minutes counted from the click.
+
+const HALLOWEEN_FROM = new Date(2026, 9, 29).getTime();
+const HALLOWEEN_UNTIL = new Date(2026, 10, 2).getTime(); // exclusive, so Sunday is included
+const HALLOWEEN_VIDEO_MS = 20000;
+const HALLOWEEN_NOTE_MS = 15 * 60 * 1000;
+const HALLOWEEN_NOTE_KEY = "random-seat-navigo-halloween-draw";
+
+const halloweenOverlay = document.getElementById("halloweenOverlay");
+const halloweenVideo = document.getElementById("halloweenVideo");
+const halloweenNote = document.getElementById("halloweenNote");
+let halloweenPlaying = false;
+let halloweenNoteTimer = null;
+
+function halloweenActive() {
+  const now = Date.now();
+  return now >= HALLOWEEN_FROM && now < HALLOWEEN_UNTIL;
+}
+
+function showHalloweenNote() {
+  clearTimeout(halloweenNoteTimer);
+  let drawnAt = 0;
+  try {
+    drawnAt = Number(localStorage.getItem(HALLOWEEN_NOTE_KEY)) || 0;
+  } catch {
+    // ignore
+  }
+  const left = drawnAt + HALLOWEEN_NOTE_MS - Date.now();
+  if (appRoot.classList.contains("hidden") || left <= 0 || left > HALLOWEEN_NOTE_MS) {
+    halloweenNote.classList.add("hidden");
+    return;
+  }
+  halloweenNote.classList.remove("hidden");
+  halloweenNoteTimer = setTimeout(showHalloweenNote, left + 50);
+}
+
+// While it plays nothing may get through: no keys (Escape, Space, media keys),
+// no right-click menu, and if the video is paused anyway it is started again.
+document.addEventListener(
+  "keydown",
+  (e) => {
+    if (!halloweenPlaying) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  },
+  true
+);
+halloweenOverlay.addEventListener("contextmenu", (e) => e.preventDefault());
+halloweenVideo.addEventListener("pause", () => {
+  if (halloweenPlaying && !halloweenVideo.ended && halloweenOverlay.classList.contains("playing")) {
+    halloweenVideo.play().catch(() => {});
+  }
+});
+
+function playHalloween() {
+  if (halloweenPlaying) return;
+  halloweenPlaying = true;
+  shuffleBtn.disabled = true;
+  try {
+    localStorage.setItem(HALLOWEEN_NOTE_KEY, String(Date.now())); // 15 minutes count from here
+  } catch {
+    // ignore
+  }
+  clearTimeout(halloweenNoteTimer);
+  halloweenNote.classList.add("hidden");
+
+  halloweenVideo.currentTime = 0;
+  halloweenOverlay.classList.remove("hidden", "dark", "playing", "video-in");
+  void halloweenOverlay.offsetWidth;
+  halloweenOverlay.classList.add("dark"); // page fades out to black
+
+  setTimeout(() => {
+    // fully black: now the picture fades in while the video starts
+    halloweenOverlay.classList.add("playing", "video-in");
+    halloweenVideo.muted = false;
+    halloweenVideo.play().catch(() => {
+      halloweenVideo.muted = true; // autoplay with sound refused: better silent than nothing
+      halloweenVideo.play().catch(() => {});
+    });
+
+    setTimeout(() => {
+      halloweenOverlay.classList.remove("video-in"); // fade to black after 20 s, whatever the video's length
+      setTimeout(() => {
+        halloweenOverlay.classList.remove("playing");
+        halloweenVideo.pause();
+        setTimeout(() => {
+          halloweenOverlay.classList.remove("dark"); // back to the page
+          setTimeout(() => {
+            halloweenOverlay.classList.add("hidden");
+            halloweenPlaying = false;
+            shuffleBtn.disabled = false;
+            showHalloweenNote();
+          }, 1500);
+        }, 600);
+      }, 1600);
+    }, HALLOWEEN_VIDEO_MS);
+  }, 1500);
+}
+
+if (halloweenActive()) {
+  halloweenVideo.preload = "auto"; // 15 MB: start fetching before the first click
+  halloweenVideo.load();
+}
+
 // Runs last, once every const/let above this point has been initialized —
 // init() (called from unlockApp) reaches back up to things like `state` that
 // are declared further down the file than the gate code near the top.
@@ -2061,3 +2174,4 @@ try {
   // ignore
 }
 if (alreadyUnlocked) unlockApp();
+showHalloweenNote();
