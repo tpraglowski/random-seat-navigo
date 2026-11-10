@@ -392,6 +392,27 @@
         </div>
       </div>
     </main>
+
+    <button type="button" class="leaf-book-btn" id="leafBookBtn" title="Indeks liści" aria-label="Indeks liści">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z" /><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z" /></svg>
+      <span class="leaf-book-badge" id="leafBookBadge">0/4</span>
+    </button>
+  </div>
+
+  <div class="modal-overlay leaf-book-overlay hidden" id="leafBookModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Indeks liści">
+      <div class="modal-head">
+        <h2>Indeks liści</h2>
+        <button id="closeLeafBookBtn" class="icon-btn" title="Zamknij">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="hint" id="leafBookSummary"></p>
+        <div class="leaf-grid" id="leafGrid"></div>
+        <p class="hint" id="leafBookHint"></p>
+      </div>
+    </div>
   </div>
 
   <div class="modal-overlay hidden" id="editModal">

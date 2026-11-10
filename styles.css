@@ -1193,6 +1193,8 @@ textarea {
 .leaf {
   position: absolute;
   top: -40px;
+  pointer-events: auto; /* the layer itself ignores the mouse; a leaf can be collected */
+  cursor: pointer;
   animation-name: leaf-fall;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
@@ -1550,3 +1552,78 @@ textarea {
 }
 .halloween-note.hidden { display: none; }
 @keyframes halloween-note-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- Leaf collection ---------- */
+.leaf-book-btn {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px 8px;
+  border: 1px solid var(--border);
+  border-right: 0;
+  border-radius: 14px 0 0 14px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+.leaf-book-btn:hover { background: var(--seat-bg); }
+.leaf-book-btn .icon { width: 24px; height: 24px; }
+.leaf-book-badge { font-size: 0.7rem; font-weight: 700; color: var(--muted); }
+.leaf-book-btn.bump { animation: leaf-book-bump 0.5s ease; }
+@keyframes leaf-book-bump {
+  30% { translate: -6px -50%; background: var(--seat-bg); }
+}
+
+.leaf-book-overlay { z-index: 700; } /* above the falling leaves (500) */
+.leaf-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 12px 0;
+}
+.leaf-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--seat-bg);
+  text-align: center;
+  font-size: 0.85rem;
+}
+.leaf-card strong { font-size: 0.95rem; }
+.leaf-card span { color: var(--muted); }
+.leaf-card.locked { opacity: 0.7; }
+.leaf-card-icon { width: 56px; height: 56px; margin-bottom: 4px; transform: rotate(35deg); }
+
+.leaf-pop {
+  position: absolute;
+  translate: -50% -100%;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  animation: leaf-pop-up 1.4s ease-out forwards;
+}
+.leaf-pop.new { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+@keyframes leaf-pop-up {
+  0% { opacity: 0; transform: translateY(6px) scale(0.8); }
+  15% { opacity: 1; transform: translateY(0) scale(1.08); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-34px) scale(1); }
+}

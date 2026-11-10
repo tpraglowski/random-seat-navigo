@@ -607,7 +607,16 @@ function applySeatPriority() {
 
 // ---------- Special effects: orange theme + falling leaves ----------
 
-const LEAF_COLORS = ["#e8730b", "#c0392b", "#e0b23c"];
+// Every falling leaf is one of these. `chance` is its weight when a leaf spawns
+// (50 %, 33 %, 20 %, 2 % — not "every Nth leaf": each leaf rolls on its own, and
+// the weights are scaled to add up to 1). A type can bring its own `shape`
+// (SVG markup in a 24x24 box); the default almond below is used otherwise.
+const LEAF_TYPES = [
+  { id: "yellow", name: "Żółty liść", color: "#e0b23c", chance: 1 / 2 },
+  { id: "orange", name: "Pomarańczowy liść", color: "#e8730b", chance: 1 / 3 },
+  { id: "red", name: "Czerwony liść", color: "#c0392b", chance: 1 / 5 },
+  { id: "spring", name: "Liść wiosny", color: "#3fae49", chance: 0.02 },
+];
 // A pointed almond silhouette (tips top and bottom) reads as a leaf even at
 // tiny sizes while spinning — the earlier rounder outline just looked like a
 // dot once it got small.
@@ -617,12 +626,24 @@ const LEAF_SHAPE = `
 `;
 let leafInterval = null;
 
+function pickLeafType() {
+  const total = LEAF_TYPES.reduce((sum, t) => sum + t.chance, 0);
+  let r = Math.random() * total;
+  for (const t of LEAF_TYPES) {
+    r -= t.chance;
+    if (r < 0) return t;
+  }
+  return LEAF_TYPES[0];
+}
+
 function spawnLeaf() {
+  const type = pickLeafType();
   const leaf = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   leaf.setAttribute("viewBox", "0 0 24 24");
   leaf.classList.add("leaf");
-  leaf.style.fill = LEAF_COLORS[Math.floor(Math.random() * LEAF_COLORS.length)];
-  leaf.innerHTML = LEAF_SHAPE;
+  leaf.dataset.type = type.id;
+  leaf.style.fill = type.color;
+  leaf.innerHTML = type.shape || LEAF_SHAPE;
 
   const size = 16 + Math.random() * 14;
   const duration = 7 + Math.random() * 6;
@@ -636,6 +657,103 @@ function spawnLeaf() {
   leavesLayer.appendChild(leaf);
   setTimeout(() => leaf.remove(), duration * 1000 + 100);
 }
+
+// ---------- Leaf collection ("Indeks liści") ----------
+// Clicking a falling leaf collects it. Counts are kept per device.
+
+const LEAF_COLLECTION_KEY = "random-seat-navigo-leaf-collection";
+const leafBookBtn = document.getElementById("leafBookBtn");
+const leafBookBadge = document.getElementById("leafBookBadge");
+const leafBookModal = document.getElementById("leafBookModal");
+const leafGrid = document.getElementById("leafGrid");
+const leafBookSummary = document.getElementById("leafBookSummary");
+const leafBookHint = document.getElementById("leafBookHint");
+
+let leafCollection = {};
+try {
+  const saved = JSON.parse(localStorage.getItem(LEAF_COLLECTION_KEY) || "{}");
+  if (saved && typeof saved === "object") leafCollection = saved;
+} catch {
+  // ignore a corrupted value — the collection just starts empty
+}
+
+function leafCount(id) {
+  return Number(leafCollection[id]) || 0;
+}
+
+function leafIconSvg(type, found) {
+  return `<svg viewBox="0 0 24 24" class="leaf-card-icon" style="fill:${found ? type.color : "var(--border)"}" aria-hidden="true">${type.shape || LEAF_SHAPE}</svg>`;
+}
+
+function renderLeafBook() {
+  const found = LEAF_TYPES.filter((t) => leafCount(t.id) > 0).length;
+  leafBookBadge.textContent = `${found}/${LEAF_TYPES.length}`;
+  leafBookSummary.textContent = `Odkryto ${found} z ${LEAF_TYPES.length} liści. Kliknij spadający liść, żeby go zebrać.`;
+  leafBookHint.textContent =
+    specialEffects === "on" ? "" : "Liście spadają tylko przy włączonych efektach specjalnych (Ustawienia).";
+  leafGrid.innerHTML = LEAF_TYPES.map((t) => {
+    const n = leafCount(t.id);
+    return n > 0
+      ? `<div class="leaf-card">${leafIconSvg(t, true)}<strong>${t.name}</strong><span>Zebrano: ${n}</span><span class="leaf-card-chance">Szansa: ${Math.round(t.chance * 100)}%</span></div>`
+      : `<div class="leaf-card locked">${leafIconSvg(t, false)}<strong>???</strong><span>Jeszcze nie odkryty</span></div>`;
+  }).join("");
+}
+
+function showLeafPop(x, y, text, isNew) {
+  const pop = document.createElement("div");
+  pop.className = isNew ? "leaf-pop new" : "leaf-pop";
+  pop.textContent = text;
+  pop.style.left = `${x}px`;
+  pop.style.top = `${y}px`;
+  leavesLayer.appendChild(pop);
+  setTimeout(() => pop.remove(), 1500);
+}
+
+function collectLeaf(leaf, x, y) {
+  const type = LEAF_TYPES.find((t) => t.id === leaf.dataset.type);
+  leaf.remove();
+  if (!type) return;
+  const isNew = leafCount(type.id) === 0;
+  leafCollection[type.id] = leafCount(type.id) + 1;
+  try {
+    localStorage.setItem(LEAF_COLLECTION_KEY, JSON.stringify(leafCollection));
+  } catch {
+    // ignore
+  }
+  showLeafPop(x, y, isNew ? `Nowy liść: ${type.name}!` : `+1 ${type.name}`, isNew);
+  renderLeafBook();
+  leafBookBtn.classList.remove("bump");
+  void leafBookBtn.offsetWidth;
+  leafBookBtn.classList.add("bump");
+}
+
+// pointerdown rather than click: a leaf drifts and spins, so it can move out
+// from under the cursor between pressing and releasing
+leavesLayer.addEventListener("pointerdown", (e) => {
+  const leaf = e.target.closest && e.target.closest(".leaf");
+  if (!leaf) return;
+  e.preventDefault();
+  collectLeaf(leaf, e.clientX, e.clientY);
+});
+
+function openLeafBook() {
+  renderLeafBook();
+  leafBookModal.classList.remove("hidden");
+}
+
+function closeLeafBook() {
+  leafBookModal.classList.add("hidden");
+}
+
+leafBookBtn.addEventListener("click", openLeafBook);
+document.getElementById("closeLeafBookBtn").addEventListener("click", closeLeafBook);
+leafBookModal.addEventListener("click", (e) => {
+  if (e.target === leafBookModal) closeLeafBook();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !leafBookModal.classList.contains("hidden")) closeLeafBook();
+});
+renderLeafBook();
 
 function startLeaves() {
   if (leafInterval) return;
@@ -1570,7 +1688,7 @@ function closeEditModal() {
 }
 
 function isModalOpen() {
-  return !editModal.classList.contains("hidden");
+  return !editModal.classList.contains("hidden") || !leafBookModal.classList.contains("hidden");
 }
 
 // ---------- Events ----------
