@@ -608,14 +608,14 @@ function applySeatPriority() {
 // ---------- Special effects: orange theme + falling leaves ----------
 
 // Every falling leaf is one of these. `chance` is its weight when a leaf spawns
-// (50 %, 33 %, 20 %, 2 % — not "every Nth leaf": each leaf rolls on its own, and
+// (1 in 2, 3, 5 and 20 — not "every Nth leaf": each leaf rolls on its own, and
 // the weights are scaled to add up to 1). A type can bring its own `shape`
 // (SVG markup in a 24x24 box); the default almond below is used otherwise.
 const LEAF_TYPES = [
   { id: "yellow", name: "Żółty liść", color: "#e0b23c", chance: 1 / 2 },
   { id: "orange", name: "Pomarańczowy liść", color: "#e8730b", chance: 1 / 3 },
   { id: "red", name: "Czerwony liść", color: "#c0392b", chance: 1 / 5 },
-  { id: "spring", name: "Liść wiosny", color: "#3fae49", chance: 0.02 },
+  { id: "spring", name: "Liść wiosny", color: "#3fae49", chance: 1 / 20 },
 ];
 // A pointed almond silhouette (tips top and bottom) reads as a leaf even at
 // tiny sizes while spinning — the earlier rounder outline just looked like a
