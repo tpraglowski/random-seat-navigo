@@ -694,7 +694,7 @@ function renderLeafBook() {
   leafGrid.innerHTML = LEAF_TYPES.map((t) => {
     const n = leafCount(t.id);
     return n > 0
-      ? `<div class="leaf-card">${leafIconSvg(t, true)}<strong>${t.name}</strong><span>Zebrano: ${n}</span><span class="leaf-card-chance">Szansa: ${Math.round(t.chance * 100)}%</span></div>`
+      ? `<div class="leaf-card">${leafIconSvg(t, true)}<strong>${t.name}</strong><span>Zebrano</span><span class="leaf-card-chance">Szansa: 1 na ${Math.round(1 / t.chance)}</span></div>`
       : `<div class="leaf-card locked">${leafIconSvg(t, false)}<strong>???</strong><span>Jeszcze nie odkryty</span></div>`;
   }).join("");
 }
@@ -720,7 +720,7 @@ function collectLeaf(leaf, x, y) {
   } catch {
     // ignore
   }
-  showLeafPop(x, y, isNew ? `Nowy liść: ${type.name}!` : `+1 ${type.name}`, isNew);
+  showLeafPop(x, y, isNew ? `Nowy liść: ${type.name}!` : `Zebrano: ${type.name}`, isNew);
   renderLeafBook();
   leafBookBtn.classList.remove("bump");
   void leafBookBtn.offsetWidth;
