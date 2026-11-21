@@ -2191,7 +2191,20 @@ const presMax = presSlides.map((s) =>
   Math.max(0, ...[...s.querySelectorAll("[data-step]")].map((el) => Number(el.dataset.step)))
 );
 const presFrames = presMax.reduce((sum, m) => sum + m + 1, 0);
-const pres = { slide: 0, step: 0, swiped: false, idle: 0, downX: 0, downY: 0 };
+const pres = {
+  slide: 0,
+  step: 0,
+  swiped: false,
+  idle: 0,
+  downX: 0,
+  downY: 0,
+  auto: false, // the current slide was reached going forward (so it may talk / move on by itself)
+  voiceId: 0, // bumped whenever the talking is cancelled, so late speech callbacks are ignored
+  startTimer: 0,
+  voiceTimer: 0,
+  timer: 0,
+  estTimers: [],
+};
 
 const PRES_ICON_EXPAND =
   '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" /><path d="M8 21H5a2 2 0 0 1-2-2v-3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /></svg>';
@@ -2205,22 +2218,124 @@ presOverlay.querySelectorAll(".peq").forEach((eq) =>
     .forEach((c, i) => c.style.setProperty("--i", i))
 );
 
-// "Speaking" text (.pvoice): the words are wrapped in spans so CSS can show them one after
-// another (--w; 1 s + 160 ms per word), and the slide gets data-auto = the time after which
-// it moves on by itself (all words said + a short pause) — see presRender().
-const PRES_WORD_MS = 160;
+// "Speaking" text (.pvoice): the red line really talks. The words are wrapped in spans; when
+// the slide is reached going forward the text is read aloud by the browser's Polish voice
+// (speech synthesis, low and slow) and each word appears as it is spoken (word-boundary
+// events). The line pulses while the voice goes (.talking) and, once it has finished, the
+// slide moves on by itself. Without a Polish voice (or if the browser refuses to speak) the
+// same thing happens silently on a timer. Reached going back (←) the text is just shown.
+const PRES_WORD_MS = 160; // silent fallback: time per word
+const PRES_VOICE_PAUSE_MS = 1600; // pause after the last word before moving on
+const PRES_VOICE_START_MS = 900; // let the line draw itself first
 presOverlay.querySelectorAll(".pvoice").forEach((p) => {
   const words = p.textContent.trim().split(/\s+/);
   p.textContent = "";
   words.forEach((word, i) => {
     if (i) p.append(" ");
     const span = document.createElement("span");
-    span.style.setProperty("--w", i);
     span.textContent = word;
     p.append(span);
   });
-  p.closest(".ps").dataset.auto = 1000 + words.length * PRES_WORD_MS + 350 + 1800;
 });
+
+function presPolishVoice() {
+  if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === "undefined") return null;
+  return speechSynthesis.getVoices().find((v) => v.lang && v.lang.toLowerCase().startsWith("pl")) || null;
+}
+
+// Cancels any speech and pending timers (called on every navigation and on close).
+function presVoiceStop() {
+  pres.voiceId++;
+  clearTimeout(pres.timer);
+  clearTimeout(pres.startTimer);
+  clearTimeout(pres.voiceTimer);
+  pres.estTimers.forEach(clearTimeout);
+  pres.estTimers = [];
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  presSlides.forEach((s) => s.classList.remove("talking"));
+}
+
+function presVoiceShowAll(slide) {
+  slide.querySelectorAll(".pvoice span").forEach((w) => w.classList.add("said"));
+}
+
+function presVoiceStart(slide) {
+  const id = pres.voiceId;
+  const alive = () => id === pres.voiceId && !presOverlay.classList.contains("hidden");
+  const words = [...slide.querySelectorAll(".pvoice span")];
+  words.forEach((w) => w.classList.remove("said"));
+  const finish = () => {
+    if (!alive()) return;
+    presVoiceShowAll(slide);
+    slide.classList.remove("talking");
+    pres.timer = setTimeout(presNext, PRES_VOICE_PAUSE_MS);
+  };
+  const silent = () => {
+    if (!alive()) return;
+    slide.classList.add("talking");
+    words.forEach((w, i) =>
+      pres.estTimers.push(setTimeout(() => w.classList.add("said"), i * PRES_WORD_MS))
+    );
+    pres.estTimers.push(setTimeout(finish, words.length * PRES_WORD_MS + 350));
+  };
+
+  // any problem with speech synthesis must never leave the slide stuck with hidden text
+  try {
+    presVoiceSpeak(words, alive, finish, silent);
+  } catch (err) {
+    silent();
+  }
+}
+
+function presVoiceSpeak(words, alive, finish, silent) {
+  const slide = words[0].closest(".ps");
+  const voice = presPolishVoice();
+  if (!voice) return silent();
+  const offsets = [];
+  let pos = 0;
+  words.forEach((w) => {
+    offsets.push(pos);
+    pos += w.textContent.length + 1;
+  });
+  const utterance = new SpeechSynthesisUtterance(words.map((w) => w.textContent).join(" "));
+  utterance.voice = voice;
+  utterance.lang = voice.lang;
+  utterance.rate = 0.88;
+  utterance.pitch = 0.6;
+  let started = false;
+  utterance.onstart = () => {
+    if (!alive()) return;
+    started = true;
+    clearTimeout(pres.voiceTimer);
+    slide.classList.add("talking");
+    // not every voice reports word boundaries — estimate until the first real one arrives
+    words.forEach((w, i) =>
+      pres.estTimers.push(setTimeout(() => w.classList.add("said"), 250 + i * 380))
+    );
+  };
+  utterance.onboundary = (e) => {
+    if (!alive() || (e.name && e.name !== "word")) return;
+    pres.estTimers.forEach(clearTimeout);
+    pres.estTimers = [];
+    words.forEach((w, i) => {
+      if (offsets[i] <= e.charIndex) w.classList.add("said");
+    });
+  };
+  utterance.onend = finish;
+  utterance.onerror = () => {
+    if (!alive()) return;
+    if (started) finish();
+    else silent();
+  };
+  // the browser may refuse to speak (autoplay rules) — then fall back to the silent version
+  pres.voiceTimer = setTimeout(() => {
+    if (!alive() || started) return;
+    utterance.onend = utterance.onerror = null;
+    speechSynthesis.cancel();
+    silent();
+  }, 2000);
+  speechSynthesis.speak(utterance);
+}
 
 // The slide fonts (Titan One / Russo One) are only fetched the first time they're needed.
 function presLoadFonts() {
@@ -2233,7 +2348,7 @@ function presLoadFonts() {
 }
 
 function presRender() {
-  clearTimeout(pres.timer);
+  presVoiceStop();
   presSlides.forEach((s, i) => {
     const now = i === pres.slide ? pres.step : i < pres.slide ? presMax[i] : 0;
     s.classList.toggle("active", i === pres.slide);
@@ -2248,10 +2363,18 @@ function presRender() {
   document.getElementById("presProgress").style.width = `${((frame + 1) / presFrames) * 100}%`;
   document.getElementById("presPrev").disabled = frame === 0;
   document.getElementById("presNext").disabled = frame === presFrames - 1;
-  // A slide with data-auto moves on by itself — but only when it was reached going forward
-  // (pres.auto), so stepping back onto it with ← doesn't get overridden.
-  const auto = Number(presSlides[pres.slide].dataset.auto);
-  if (pres.auto && pres.step === 0 && auto) pres.timer = setTimeout(presNext, auto);
+  // A talking slide (.pvoice) speaks and then moves on by itself — but only when it was reached
+  // going forward (pres.auto), so stepping back onto it with ← doesn't get overridden.
+  const slide = presSlides[pres.slide];
+  if (slide.querySelector(".pvoice") && pres.step === 0 && !presOverlay.classList.contains("hidden")) {
+    if (pres.auto) {
+      slide.querySelectorAll(".pvoice span").forEach((w) => w.classList.remove("said"));
+      const id = pres.voiceId;
+      pres.startTimer = setTimeout(() => {
+        if (id === pres.voiceId) presVoiceStart(slide);
+      }, PRES_VOICE_START_MS);
+    } else presVoiceShowAll(slide);
+  }
 }
 
 function presNext() {
@@ -2285,6 +2408,7 @@ function presWake() {
 
 function presOpen() {
   presLoadFonts();
+  if (window.speechSynthesis) speechSynthesis.getVoices(); // voices load lazily — warm them up
   pres.slide = 0;
   pres.step = 0;
   pres.auto = false;
@@ -2296,7 +2420,7 @@ function presOpen() {
 
 function presClose() {
   clearTimeout(pres.idle);
-  clearTimeout(pres.timer);
+  presVoiceStop();
   if (document.fullscreenElement === presOverlay) document.exitFullscreen().catch(() => {});
   presOverlay.classList.add("hidden");
   presentationBtn.focus({ preventScroll: true });
