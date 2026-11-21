@@ -1707,6 +1707,15 @@ textarea {
 .ps.active .prline { animation: pDraw .8s cubic-bezier(.6, 0, .2, 1) both; }
 @keyframes pDraw { from { transform: scaleX(0); } }
 .ps-9:not([data-now="0"]) .prline { top: 6.4cqw; }
+/* Kreska „mówi”: tekst wchodzi słowo po słowie (1 s + 0,16 s na słowo — te same liczby w script.js),
+   a kreska drga jak fala głosu. Po przejściu do kolejnego kroku tekst znika. */
+.pvoice { position: absolute; left: 14cqw; right: 14cqw; top: 32cqw; margin: 0; text-align: center; font-size: 2.8cqw; line-height: 1.5; color: #ff3030; text-shadow: 0 0 1.2cqw #ff303055; transition: opacity .35s ease; }
+.pvoice span { display: inline-block; }
+.ps-9.active[data-now="0"] .pvoice span { animation: pWord .35s ease both; animation-delay: calc(1s + var(--w, 0) * .16s); }
+.ps-9:not([data-now="0"]) .pvoice { opacity: 0; pointer-events: none; }
+.ps-9.active[data-now="0"] .prline { transform-origin: center; animation: pDraw .8s cubic-bezier(.6, 0, .2, 1) both, pTalk .6s ease-in-out 1s 7; }
+@keyframes pWord { from { opacity: 0; transform: translateY(.8cqw) scale(.9); } }
+@keyframes pTalk { 0%, 100% { transform: scaleY(1); } 20% { transform: scaleY(2.4); } 45% { transform: scaleY(.7); } 70% { transform: scaleY(1.9); } }
 .pgcard { position: absolute; top: 11.4cqw; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 1cqw; width: 20.1cqw; height: 31cqw; padding-top: 1cqw; border: .9cqw solid #ff3030; border-radius: 3cqw; background: #555; }
 .pgn { margin-bottom: .3cqw; font-size: 2.3cqw; line-height: 1.2; color: #fff; }
 .pchip { display: grid; place-items: center; width: 17.2cqw; height: 3.4cqw; border-radius: 2cqw; background: #ff3030; color: #000; font-size: 2cqw; }

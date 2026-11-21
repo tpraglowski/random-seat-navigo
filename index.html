@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Random Seat Navigo</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=20261121b" />
+  <link rel="stylesheet" href="styles.css?v=20261121c" />
 </head>
 <body>
   <div class="access-gate" id="accessGate">
@@ -602,6 +602,9 @@
         <!-- 9. Podział na grupy (escape room) -->
         <div class="ps ps-dark ps-9">
           <div class="prline"></div>
+          <!-- Sama czerwona kreska „mówi” (pierwszy krok): słowa pojawiają się po kolei, kreska pulsuje
+               jak fala głosu, a po wypowiedzi slajd sam przechodzi dalej (patrz script.js, data-auto). -->
+          <p class="pvoice">Jeśli spodziewaliście się, że to będzie zwykła lekcja, to jesteście w błędzie. Waszym zadaniem jest wydostać się z tej sali.</p>
           <!-- Każda grupa wchodzi osobnym krokiem (czytanie składów po kolei); na końcu podświetlają się
                pierwsze osoby z grup i pojawia się wezwanie po koperty. -->
           <div class="pgcard" data-step="1" style="left:15.8cqw">
@@ -621,7 +624,7 @@
           <div class="pgcard" data-step="3" style="left:64cqw">
             <span class="pgn">Grupa 3</span>
             <span class="pchip pchip-lead" data-step="3" style="--d:.35s">Kuba M.</span>
-            <span class="pchip" data-step="3" style="--d:.5s">Jared</span>
+            <span class="pchip" data-step="3" style="--d:.5s">Jarek</span>
             <span class="pchip" data-step="3" style="--d:.65s">Emma</span>
             <span class="pchip" data-step="3" style="--d:.8s">Helena M.</span>
             <span class="pchip" data-step="3" style="--d:.95s">Helena S.</span>
@@ -653,6 +656,6 @@
       </div>
     </div>
 
-  <script type="module" src="script.js?v=20261121b"></script>
+  <script type="module" src="script.js?v=20261121c"></script>
 </body>
 </html>

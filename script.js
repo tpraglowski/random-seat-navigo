@@ -2205,6 +2205,23 @@ presOverlay.querySelectorAll(".peq").forEach((eq) =>
     .forEach((c, i) => c.style.setProperty("--i", i))
 );
 
+// "Speaking" text (.pvoice): the words are wrapped in spans so CSS can show them one after
+// another (--w; 1 s + 160 ms per word), and the slide gets data-auto = the time after which
+// it moves on by itself (all words said + a short pause) — see presRender().
+const PRES_WORD_MS = 160;
+presOverlay.querySelectorAll(".pvoice").forEach((p) => {
+  const words = p.textContent.trim().split(/\s+/);
+  p.textContent = "";
+  words.forEach((word, i) => {
+    if (i) p.append(" ");
+    const span = document.createElement("span");
+    span.style.setProperty("--w", i);
+    span.textContent = word;
+    p.append(span);
+  });
+  p.closest(".ps").dataset.auto = 1000 + words.length * PRES_WORD_MS + 350 + 1800;
+});
+
 // The slide fonts (Titan One / Russo One) are only fetched the first time they're needed.
 function presLoadFonts() {
   if (document.getElementById("presFonts")) return;
@@ -2216,6 +2233,7 @@ function presLoadFonts() {
 }
 
 function presRender() {
+  clearTimeout(pres.timer);
   presSlides.forEach((s, i) => {
     const now = i === pres.slide ? pres.step : i < pres.slide ? presMax[i] : 0;
     s.classList.toggle("active", i === pres.slide);
@@ -2230,18 +2248,26 @@ function presRender() {
   document.getElementById("presProgress").style.width = `${((frame + 1) / presFrames) * 100}%`;
   document.getElementById("presPrev").disabled = frame === 0;
   document.getElementById("presNext").disabled = frame === presFrames - 1;
+  // A slide with data-auto moves on by itself — but only when it was reached going forward
+  // (pres.auto), so stepping back onto it with ← doesn't get overridden.
+  const auto = Number(presSlides[pres.slide].dataset.auto);
+  if (pres.auto && pres.step === 0 && auto) pres.timer = setTimeout(presNext, auto);
 }
 
 function presNext() {
-  if (pres.step < presMax[pres.slide]) pres.step++;
-  else if (pres.slide < presSlides.length - 1) {
+  if (pres.step < presMax[pres.slide]) {
+    pres.step++;
+    pres.auto = false;
+  } else if (pres.slide < presSlides.length - 1) {
     pres.slide++;
     pres.step = 0;
+    pres.auto = true;
   } else return;
   presRender();
 }
 
 function presPrev() {
+  pres.auto = false;
   if (pres.step > 0) pres.step--;
   else if (pres.slide > 0) {
     pres.slide--;
@@ -2261,6 +2287,7 @@ function presOpen() {
   presLoadFonts();
   pres.slide = 0;
   pres.step = 0;
+  pres.auto = false;
   presRender();
   presOverlay.classList.remove("hidden");
   presStageEl.focus({ preventScroll: true });
@@ -2269,6 +2296,7 @@ function presOpen() {
 
 function presClose() {
   clearTimeout(pres.idle);
+  clearTimeout(pres.timer);
   if (document.fullscreenElement === presOverlay) document.exitFullscreen().catch(() => {});
   presOverlay.classList.add("hidden");
   presentationBtn.focus({ preventScroll: true });
@@ -2327,10 +2355,12 @@ window.addEventListener(
     else if (key === "Home") {
       pres.slide = 0;
       pres.step = 0;
+      pres.auto = false;
       presRender();
     } else if (key === "End") {
       pres.slide = presSlides.length - 1;
       pres.step = presMax[pres.slide];
+      pres.auto = false;
       presRender();
     } else if (key === "f" || key === "F") presToggleFullscreen();
     else return;
