@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Random Seat Navigo</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="styles.css?v=20261121e" />
+  <link rel="stylesheet" href="styles.css?v=20261121f" />
 </head>
 <body>
   <div class="access-gate" id="accessGate">
@@ -602,36 +602,37 @@
         <!-- 9. Podział na grupy (escape room) -->
         <div class="ps ps-dark ps-9">
           <div class="prline"></div>
-          <!-- Sama czerwona kreska „mówi” (pierwszy krok): czyta tekst na głos, słowa pojawiają się w rytm
-               mowy, a punkty na kresce skaczą w górę i w dół jak fala głosu (canvas); po wypowiedzi slajd
-               sam przechodzi dalej (patrz script.js, „Speaking text”). -->
-          <canvas class="pwave" id="presWave" aria-hidden="true"></canvas>
-          <p class="pvoice">Jeśli spodziewaliście się, że to będzie zwykła lekcja, to jesteście w błędzie. Waszym zadaniem jest wydostać się z tej sali.</p>
-          <!-- Każda grupa wchodzi osobnym krokiem (czytanie składów po kolei); na końcu podświetlają się
-               pierwsze osoby z grup i pojawia się wezwanie po koperty. -->
+          <!-- Kroki: 0 = sama czerwona kreska „mówi” (czyta wstęp na głos, słowa w rytm mowy, punkty na
+               kresce skaczą jak fala głosu) i sama przechodzi dalej; 1 = wszystkie grupy naraz + głos
+               „Usiądźcie w tych grupach” i czekanie na kliknięcie; 2 = podświetlają się pierwsze osoby
+               z grup i pojawia się wezwanie po koperty. Mówienie: data-voice-step (krok), data-then="next"
+               (po wypowiedzi przejdź dalej sam) — patrz script.js, „Speaking text”. -->
+          <canvas class="pwave" aria-hidden="true"></canvas>
+          <p class="pvoice pvoice-a" data-voice-step="0" data-then="next">Jeśli spodziewaliście się, że to będzie zwykła lekcja, to jesteście w błędzie. Waszym zadaniem jest wydostać się z tej sali.</p>
           <div class="pgcard" data-step="1" style="left:15.8cqw">
             <span class="pgn">Grupa 1</span>
-            <span class="pchip pchip-lead" data-step="1" style="--d:.35s">Miron</span>
-            <span class="pchip" data-step="1" style="--d:.5s">Maciek</span>
-            <span class="pchip" data-step="1" style="--d:.65s">Ania</span>
-            <span class="pchip" data-step="1" style="--d:.8s">Szymon</span>
+            <span class="pchip pchip-lead" data-step="1" style="--d:.3s">Miron</span>
+            <span class="pchip" data-step="1" style="--d:.38s">Maciek</span>
+            <span class="pchip" data-step="1" style="--d:.46s">Ania</span>
+            <span class="pchip" data-step="1" style="--d:.54s">Szymon</span>
           </div>
-          <div class="pgcard" data-step="2" style="left:39.9cqw">
+          <div class="pgcard" data-step="1" style="left:39.9cqw;--d:.08s">
             <span class="pgn">Grupa 2</span>
-            <span class="pchip pchip-lead" data-step="2" style="--d:.35s">Janek</span>
-            <span class="pchip" data-step="2" style="--d:.5s">Kuba G.</span>
-            <span class="pchip" data-step="2" style="--d:.65s">Alisa</span>
-            <span class="pchip" data-step="2" style="--d:.8s">Wiktoria</span>
+            <span class="pchip pchip-lead" data-step="1" style="--d:.3s">Janek</span>
+            <span class="pchip" data-step="1" style="--d:.38s">Kuba G.</span>
+            <span class="pchip" data-step="1" style="--d:.46s">Alisa</span>
+            <span class="pchip" data-step="1" style="--d:.54s">Wiktoria</span>
           </div>
-          <div class="pgcard" data-step="3" style="left:64cqw">
+          <div class="pgcard" data-step="1" style="left:64cqw;--d:.16s">
             <span class="pgn">Grupa 3</span>
-            <span class="pchip pchip-lead" data-step="3" style="--d:.35s">Kuba M.</span>
-            <span class="pchip" data-step="3" style="--d:.5s">Jarek</span>
-            <span class="pchip" data-step="3" style="--d:.65s">Emma</span>
-            <span class="pchip" data-step="3" style="--d:.8s">Helena M.</span>
-            <span class="pchip" data-step="3" style="--d:.95s">Helena S.</span>
+            <span class="pchip pchip-lead" data-step="1" style="--d:.3s">Kuba M.</span>
+            <span class="pchip" data-step="1" style="--d:.38s">Jarek</span>
+            <span class="pchip" data-step="1" style="--d:.46s">Emma</span>
+            <span class="pchip" data-step="1" style="--d:.54s">Helena M.</span>
+            <span class="pchip" data-step="1" style="--d:.62s">Helena S.</span>
           </div>
-          <p class="pcall" data-step="4" style="--d:.3s">Wymienione osoby podejdą po koperty</p>
+          <p class="pvoice pvoice-b" data-voice-step="1">Usiądźcie w tych grupach.</p>
+          <p class="pcall" data-step="2" style="--d:.3s">Wymienione osoby podejdą po koperty</p>
         </div>
 
         <!-- 10. Escape room: wzór -->
@@ -641,7 +642,8 @@
             <div class="pf-bar"></div>
             <div class="pf-bot"><b class="pm pp">ź<i>ż</i></b></div>
           </div>
-          <p class="ptext">Macie 25 minut, by zdobyć sześciocyfrowy kod i wyjść z sali. Podczas tego escape-rooma będziecie zdobywać liczby, np. ą = 12,<br>potem wstawicie je do tego wzoru i poznacie kod. Musicie policzyć, jaka potęga wyjdzie, ale nie musicie jej liczyć. Jeśli wyjdzie wam np. 2 do piątej, to wasz kod to 25.</p>
+          <!-- Ten slajd też mówi: czyta instrukcję na głos (po wejściu „do przodu”) i zostaje do kliknięcia. -->
+          <p class="pvoice ptext" data-voice-step="0">Macie 25 minut, by zdobyć sześciocyfrowy kod i wyjść z sali. Podczas tego escape-rooma będziecie zdobywać liczby, np. ą = 12, potem wstawicie je do tego wzoru i poznacie kod. Musicie policzyć, jaka potęga wyjdzie, ale nie musicie jej liczyć. Jeśli wyjdzie wam np. 2 do piątej, to wasz kod to 25.</p>
         </div>
 
       </div>
@@ -658,6 +660,6 @@
       </div>
     </div>
 
-  <script type="module" src="script.js?v=20261121e"></script>
+  <script type="module" src="script.js?v=20261121f"></script>
 </body>
 </html>

@@ -2204,6 +2204,7 @@ const pres = {
   voiceTimer: 0,
   timer: 0,
   estTimers: [],
+  canvas: null, // the .pwave canvas of the slide that is talking
   wave: Array(41).fill(0), // heights of the dots on the talking line (-1…1)
   rand: Array(41).fill(0), // random direction of each dot, re-rolled every few frames
   energy: 0, // how loud the voice is right now (kicked to 1 by every spoken word, then decays)
@@ -2223,11 +2224,13 @@ presOverlay.querySelectorAll(".peq").forEach((eq) =>
     .forEach((c, i) => c.style.setProperty("--i", i))
 );
 
-// "Speaking" text (.pvoice): the red line really talks. The words are wrapped in spans; when
-// the slide is reached going forward the text is read aloud by the browser's Polish voice
-// (speech synthesis, low and slow) and each word appears as it is spoken (word-boundary
-// events). The line turns into a row of dots that jump up and down like a sound wave while
-// the voice goes (.talking) and, once it has finished, the slide moves on by itself. Without a Polish voice (or if the browser refuses to speak) the
+// "Speaking" text (.pvoice): the slides really talk. A .pvoice paragraph belongs to one step
+// (data-voice-step); its words are wrapped in spans. When that step is reached going forward
+// the text is read aloud by the browser's Polish voice (speech synthesis, low and slow) and
+// each word appears as it is spoken (word-boundary events). On the slide with a red line the
+// line turns into a row of dots that jump up and down like a sound wave while the voice goes
+// (.talking). When the voice has finished, data-then="next" moves on by itself; otherwise the
+// slide waits for a click. Without a Polish voice (or if the browser refuses to speak) the
 // same thing happens silently on a timer. Reached going back (←) the text is just shown.
 const PRES_WORD_MS = 160; // silent fallback: time per word
 const PRES_VOICE_PAUSE_MS = 1600; // pause after the last word before moving on
@@ -2264,17 +2267,19 @@ function presVoiceStop() {
   pres.wave.fill(0);
 }
 
-// The red line is drawn as a row of dots joined by a thin line (canvas #presWave). While the
-// voice goes the dots jump up and down like a sound wave — every spoken word kicks them harder
-// (pres.energy = 1, then it decays) — and when it stops they settle back into a flat line.
+// The red line is drawn as a row of dots joined by a thin line (the slide's .pwave canvas).
+// While the voice goes the dots jump up and down like a sound wave — every spoken word kicks
+// them harder (pres.energy = 1, then it decays) — and when it stops they settle back into a
+// flat line. Slides without a canvas just get the .talking class.
 function presTalkOn(slide) {
   slide.classList.add("talking");
-  if (!pres.raf) pres.raf = requestAnimationFrame(presWaveFrame);
+  pres.canvas = slide.querySelector(".pwave");
+  if (pres.canvas && !pres.raf) pres.raf = requestAnimationFrame(presWaveFrame);
 }
 
 function presWaveFrame() {
   pres.raf = 0;
-  const canvas = document.getElementById("presWave");
+  const canvas = pres.canvas;
   const talking = canvas.closest(".ps").classList.contains("talking");
   const n = pres.wave.length;
   pres.energy = Math.max(pres.energy * 0.92, talking ? 0.2 : 0);
@@ -2321,20 +2326,22 @@ function presWaveFrame() {
   if (talking || moving || pres.energy > 0.01) pres.raf = requestAnimationFrame(presWaveFrame);
 }
 
-function presVoiceShowAll(slide) {
-  slide.querySelectorAll(".pvoice span").forEach((w) => w.classList.add("said"));
+function presVoiceShowAll(line) {
+  line.querySelectorAll("span").forEach((w) => w.classList.add("said"));
 }
 
-function presVoiceStart(slide) {
+// `line` is the .pvoice paragraph to read out on `slide`.
+function presVoiceStart(slide, line) {
   const id = pres.voiceId;
   const alive = () => id === pres.voiceId && !presOverlay.classList.contains("hidden");
-  const words = [...slide.querySelectorAll(".pvoice span")];
+  const words = [...line.querySelectorAll("span")];
   words.forEach((w) => w.classList.remove("said"));
   const finish = () => {
     if (!alive()) return;
-    presVoiceShowAll(slide);
+    presVoiceShowAll(line);
     slide.classList.remove("talking");
-    pres.timer = setTimeout(presNext, PRES_VOICE_PAUSE_MS);
+    // data-then="next": move on by itself; otherwise wait for a click
+    if (line.dataset.then === "next") pres.timer = setTimeout(presNext, PRES_VOICE_PAUSE_MS);
   };
   const silent = () => {
     if (!alive()) return;
@@ -2434,35 +2441,39 @@ function presRender() {
     s.querySelectorAll("[data-step]").forEach((el) =>
       el.classList.toggle("on", Number(el.dataset.step) <= now)
     );
+    // a spoken paragraph is only visible in its own step
+    s.querySelectorAll(".pvoice").forEach((el) =>
+      el.classList.toggle("shown", Number(el.dataset.voiceStep || 0) === now)
+    );
   });
   const frame = presMax.slice(0, pres.slide).reduce((sum, m) => sum + m + 1, 0) + pres.step;
   document.getElementById("presCount").textContent = `${pres.slide + 1} / ${presSlides.length}`;
   document.getElementById("presProgress").style.width = `${((frame + 1) / presFrames) * 100}%`;
   document.getElementById("presPrev").disabled = frame === 0;
   document.getElementById("presNext").disabled = frame === presFrames - 1;
-  // A talking slide (.pvoice) speaks and then moves on by itself — but only when it was reached
-  // going forward (pres.auto), so stepping back onto it with ← doesn't get overridden.
+  // If this step has a spoken paragraph (.pvoice) it is read out — but only when the step was
+  // reached going forward (pres.auto), so stepping back onto it with ← doesn't talk again
+  // (the text is just shown) and doesn't get overridden by an automatic move-on.
   const slide = presSlides[pres.slide];
-  if (slide.querySelector(".pvoice") && pres.step === 0 && !presOverlay.classList.contains("hidden")) {
+  const line = slide.querySelector(`.pvoice[data-voice-step="${pres.step}"]`);
+  if (line && !presOverlay.classList.contains("hidden")) {
     if (pres.auto) {
-      slide.querySelectorAll(".pvoice span").forEach((w) => w.classList.remove("said"));
+      line.querySelectorAll("span").forEach((w) => w.classList.remove("said"));
       const id = pres.voiceId;
       pres.startTimer = setTimeout(() => {
-        if (id === pres.voiceId) presVoiceStart(slide);
+        if (id === pres.voiceId) presVoiceStart(slide, line);
       }, PRES_VOICE_START_MS);
-    } else presVoiceShowAll(slide);
+    } else presVoiceShowAll(line);
   }
 }
 
 function presNext() {
-  if (pres.step < presMax[pres.slide]) {
-    pres.step++;
-    pres.auto = false;
-  } else if (pres.slide < presSlides.length - 1) {
+  if (pres.step < presMax[pres.slide]) pres.step++;
+  else if (pres.slide < presSlides.length - 1) {
     pres.slide++;
     pres.step = 0;
-    pres.auto = true;
   } else return;
+  pres.auto = true;
   presRender();
 }
 

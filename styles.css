@@ -1710,19 +1710,24 @@ textarea {
 /* Kreska „mówi”: czyta tekst na głos (script.js), słowa dostają .said w chwili wypowiedzenia,
    a w trakcie mowy (.talking) kreska blednie i pojawia się nad nią fala z punktów (canvas .pwave),
    które skaczą w górę i w dół. Po przejściu do kolejnego kroku tekst znika. */
-.pwave { position: absolute; left: 15.8cqw; top: 21.65cqw; width: 68.4cqw; height: 13cqw; opacity: 0; transition: opacity .35s ease; pointer-events: none; }
-.ps-9.talking .pwave { opacity: 1; }
+.pwave { position: absolute; left: 15.8cqw; top: 21.65cqw; width: 68.4cqw; height: 13cqw; opacity: 0; transition: opacity .35s ease, top .8s cubic-bezier(.6, 0, .2, 1); pointer-events: none; }
+.ps-9:not([data-now="0"]) .pwave { top: .45cqw; } /* fala jedzie razem z kreską do góry */
+.ps.talking .pwave { opacity: 1; }
 .ps-9.talking .prline { opacity: .22; }
-.pvoice { position: absolute; left: 14cqw; right: 14cqw; top: 36.5cqw; margin: 0; text-align: center; font-size: 2.8cqw; line-height: 1.5; color: #ff3030; text-shadow: 0 0 1.2cqw #ff303055; transition: opacity .35s ease; }
+/* Mówiony tekst (.pvoice): widoczny tylko w swoim kroku (.shown ustawia script.js), a słowa
+   wchodzą (.said) dokładnie wtedy, gdy są wypowiadane. */
+.pvoice { position: absolute; margin: 0; text-align: center; color: #ff3030; text-shadow: 0 0 1.2cqw #ff303055; transition: opacity .35s ease; pointer-events: none; }
+.pvoice:not(.shown) { opacity: 0; }
 .pvoice span { display: inline-block; opacity: 0; transform: translateY(.8cqw) scale(.9); transition: opacity .3s ease, transform .35s ease; }
 .pvoice span.said { opacity: 1; transform: none; }
-.ps-9:not([data-now="0"]) .pvoice { opacity: 0; pointer-events: none; }
+.pvoice-a { left: 14cqw; right: 14cqw; top: 36.5cqw; font-size: 2.8cqw; line-height: 1.5; }
+.pvoice-b { left: 0; right: 0; top: 45cqw; font-size: 3.6cqw; line-height: 1.2; }
 .pgcard { position: absolute; top: 11.4cqw; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 1cqw; width: 20.1cqw; height: 31cqw; padding-top: 1cqw; border: .9cqw solid #ff3030; border-radius: 3cqw; background: #555; }
 .pgn { margin-bottom: .3cqw; font-size: 2.3cqw; line-height: 1.2; color: #fff; }
 .pchip { display: grid; place-items: center; width: 17.2cqw; height: 3.4cqw; border-radius: 2cqw; background: #ff3030; color: #000; font-size: 2cqw; }
 .ps .pchip[data-step] { transform: translateY(-7cqw) scale(.85); transition: opacity .3s ease var(--d, 0s), transform .55s cubic-bezier(.34, 1.56, .64, 1) var(--d, 0s), background-color .4s ease, box-shadow .4s ease; }
 .ps .pchip[data-step].on { transform: none; }
-.ps-9[data-now="4"] .pchip-lead { background: #fff; box-shadow: 0 0 1.4cqw #ff3030; }
+.ps-9[data-now="2"] .pchip-lead { background: #fff; box-shadow: 0 0 1.4cqw #ff3030; }
 .pcall { position: absolute; left: 0; right: 0; top: 45cqw; margin: 0; text-align: center; font-size: 3.6cqw; line-height: 1.2; color: #ff3030; }
 
 /* 10. Wzór i instrukcja */
@@ -1732,8 +1737,6 @@ textarea {
 .ps-10.active .pfrac2 { animation: pFlicker 1.1s both; }
 @keyframes pFlicker { 0% { opacity: 0; } 10% { opacity: .9; } 14% { opacity: .1; } 22% { opacity: 1; } 30% { opacity: .3; } 40%, 100% { opacity: 1; } }
 .ptext { position: absolute; left: 3cqw; right: 3cqw; top: 35cqw; margin: 0; text-align: center; font-size: 1.95cqw; line-height: 1.4; color: #ff3030; }
-.ps-10.active .ptext { animation: pFade .8s ease .9s both; }
-@keyframes pFade { from { opacity: 0; transform: translateY(1.6cqw); } }
 
 /* Pasek sterowania (znika po chwili bezczynności myszy). */
 .pres-bar { position: absolute; left: 50%; bottom: 14px; z-index: 2; display: flex; align-items: center; gap: 6px; padding: 6px 8px; overflow: hidden; border-radius: 16px; background: #171822cc; color: #fff; box-shadow: 0 8px 26px #0006; backdrop-filter: blur(8px); transform: translateX(-50%); transition: opacity .3s; }
