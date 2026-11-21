@@ -2174,6 +2174,180 @@ document.addEventListener("keyup", (e) => {
   if (spaceShouldTrigger(e)) e.preventDefault();
 });
 
+// ---------- Presentation: "Mnożenie potęg o tej samej podstawie" ----------
+// A full-window slide player (#presentation), opened by the "Prezentacja" button in the
+// left panel. Each slide (.ps) has animation steps: elements with data-step="n" pop in once
+// the current step reaches n, and the slide carries data-now="<current step>" so CSS can
+// also move things around (title, line, cards).
+// → / Space / click = next step (then next slide), ← = back, Esc = close, F = full screen.
+// While it is open it swallows the keyboard (capture phase), so Space doesn't also play
+// the raccoon / Spider-Man animations and Z doesn't call the axolotl.
+
+const presentationBtn = document.getElementById("presentationBtn");
+const presOverlay = document.getElementById("presentation");
+const presStageEl = document.getElementById("presStage");
+const presSlides = [...presOverlay.querySelectorAll(".ps")];
+const presMax = presSlides.map((s) =>
+  Math.max(0, ...[...s.querySelectorAll("[data-step]")].map((el) => Number(el.dataset.step)))
+);
+const presFrames = presMax.reduce((sum, m) => sum + m + 1, 0);
+const pres = { slide: 0, step: 0, swiped: false, idle: 0, downX: 0, downY: 0 };
+
+const PRES_ICON_EXPAND =
+  '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" /><path d="M8 21H5a2 2 0 0 1-2-2v-3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /></svg>';
+const PRES_ICON_SHRINK =
+  '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h3a2 2 0 0 0 2-2V3" /><path d="M21 8h-3a2 2 0 0 1-2-2V3" /><path d="M3 16h3a2 2 0 0 1 2 2v3" /><path d="M21 16h-3a2 2 0 0 0-2 2v3" /></svg>';
+
+// Tokens (digits, signs) of each equation get a stagger index for their entrance animation.
+presOverlay.querySelectorAll(".peq").forEach((eq) =>
+  [...eq.children]
+    .filter((c) => !c.hasAttribute("data-step"))
+    .forEach((c, i) => c.style.setProperty("--i", i))
+);
+
+// The slide fonts (Titan One / Russo One) are only fetched the first time they're needed.
+function presLoadFonts() {
+  if (document.getElementById("presFonts")) return;
+  const link = document.createElement("link");
+  link.id = "presFonts";
+  link.rel = "stylesheet";
+  link.href = "https://fonts.googleapis.com/css2?family=Russo+One&family=Titan+One&display=swap";
+  document.head.append(link);
+}
+
+function presRender() {
+  presSlides.forEach((s, i) => {
+    const now = i === pres.slide ? pres.step : i < pres.slide ? presMax[i] : 0;
+    s.classList.toggle("active", i === pres.slide);
+    s.classList.toggle("before", i < pres.slide);
+    s.dataset.now = now;
+    s.querySelectorAll("[data-step]").forEach((el) =>
+      el.classList.toggle("on", Number(el.dataset.step) <= now)
+    );
+  });
+  const frame = presMax.slice(0, pres.slide).reduce((sum, m) => sum + m + 1, 0) + pres.step;
+  document.getElementById("presCount").textContent = `${pres.slide + 1} / ${presSlides.length}`;
+  document.getElementById("presProgress").style.width = `${((frame + 1) / presFrames) * 100}%`;
+  document.getElementById("presPrev").disabled = frame === 0;
+  document.getElementById("presNext").disabled = frame === presFrames - 1;
+}
+
+function presNext() {
+  if (pres.step < presMax[pres.slide]) pres.step++;
+  else if (pres.slide < presSlides.length - 1) {
+    pres.slide++;
+    pres.step = 0;
+  } else return;
+  presRender();
+}
+
+function presPrev() {
+  if (pres.step > 0) pres.step--;
+  else if (pres.slide > 0) {
+    pres.slide--;
+    pres.step = presMax[pres.slide];
+  } else return;
+  presRender();
+}
+
+// The control bar and the mouse cursor fade out after a moment without movement.
+function presWake() {
+  presOverlay.classList.remove("is-idle");
+  clearTimeout(pres.idle);
+  pres.idle = setTimeout(() => presOverlay.classList.add("is-idle"), 2500);
+}
+
+function presOpen() {
+  presLoadFonts();
+  pres.slide = 0;
+  pres.step = 0;
+  presRender();
+  presOverlay.classList.remove("hidden");
+  presStageEl.focus({ preventScroll: true });
+  presWake();
+}
+
+function presClose() {
+  clearTimeout(pres.idle);
+  if (document.fullscreenElement === presOverlay) document.exitFullscreen().catch(() => {});
+  presOverlay.classList.add("hidden");
+  presentationBtn.focus({ preventScroll: true });
+}
+
+function presToggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else if (presOverlay.requestFullscreen) presOverlay.requestFullscreen().catch(() => {});
+}
+
+presentationBtn.addEventListener("click", presOpen);
+["pointerenter", "focus"].forEach((ev) =>
+  presentationBtn.addEventListener(ev, presLoadFonts, { once: true })
+);
+document.getElementById("presClose").addEventListener("click", presClose);
+document.getElementById("presNext").addEventListener("click", presNext);
+document.getElementById("presPrev").addEventListener("click", presPrev);
+document.getElementById("presFull").addEventListener("click", presToggleFullscreen);
+document.addEventListener("fullscreenchange", () => {
+  document.getElementById("presFull").innerHTML =
+    document.fullscreenElement === presOverlay ? PRES_ICON_SHRINK : PRES_ICON_EXPAND;
+});
+
+presStageEl.addEventListener("click", () => {
+  if (pres.swiped) pres.swiped = false;
+  else presNext();
+});
+presStageEl.addEventListener("pointerdown", (e) => {
+  pres.downX = e.clientX;
+  pres.downY = e.clientY;
+  pres.swiped = false;
+});
+presStageEl.addEventListener("pointerup", (e) => {
+  const dx = e.clientX - pres.downX;
+  if (Math.abs(dx) > 60 && Math.abs(e.clientY - pres.downY) < 80) {
+    pres.swiped = true;
+    if (dx < 0) presNext();
+    else presPrev();
+  }
+});
+presOverlay.addEventListener("pointermove", presWake);
+presOverlay.addEventListener("pointerdown", presWake);
+
+window.addEventListener(
+  "keydown",
+  (e) => {
+    if (presOverlay.classList.contains("hidden")) return;
+    e.stopImmediatePropagation(); // keep the page's own shortcuts (Space animations, Z, Esc) away
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const key = e.key;
+    // Space / Enter on a focused bar button is just a normal click of that button.
+    if ((key === " " || key === "Enter") && e.target.closest && e.target.closest("button")) return;
+    if (key === "Escape") presClose();
+    else if (key === "ArrowRight" || key === "ArrowDown" || key === "PageDown" || key === " " || key === "Enter") presNext();
+    else if (key === "ArrowLeft" || key === "ArrowUp" || key === "PageUp" || key === "Backspace") presPrev();
+    else if (key === "Home") {
+      pres.slide = 0;
+      pres.step = 0;
+      presRender();
+    } else if (key === "End") {
+      pres.slide = presSlides.length - 1;
+      pres.step = presMax[pres.slide];
+      presRender();
+    } else if (key === "f" || key === "F") presToggleFullscreen();
+    else return;
+    e.preventDefault();
+    presWake();
+  },
+  true
+);
+window.addEventListener(
+  "keyup",
+  (e) => {
+    if (!presOverlay.classList.contains("hidden")) e.stopImmediatePropagation();
+  },
+  true
+);
+presRender();
+
 // ---------- Halloween (Thu 29 Oct – Sun 1 Nov 2026) ----------
 // In that window Losuj doesn't draw: the screen fades to black, a video plays
 // on its own (no controls, can't be stopped) and is cut off after 20 s, the
