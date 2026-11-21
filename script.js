@@ -2204,6 +2204,11 @@ const pres = {
   voiceTimer: 0,
   timer: 0,
   estTimers: [],
+  wave: Array(41).fill(0), // heights of the dots on the talking line (-1…1)
+  rand: Array(41).fill(0), // random direction of each dot, re-rolled every few frames
+  energy: 0, // how loud the voice is right now (kicked to 1 by every spoken word, then decays)
+  raf: 0,
+  tick: 0,
 };
 
 const PRES_ICON_EXPAND =
@@ -2221,8 +2226,8 @@ presOverlay.querySelectorAll(".peq").forEach((eq) =>
 // "Speaking" text (.pvoice): the red line really talks. The words are wrapped in spans; when
 // the slide is reached going forward the text is read aloud by the browser's Polish voice
 // (speech synthesis, low and slow) and each word appears as it is spoken (word-boundary
-// events). The line pulses while the voice goes (.talking) and, once it has finished, the
-// slide moves on by itself. Without a Polish voice (or if the browser refuses to speak) the
+// events). The line turns into a row of dots that jump up and down like a sound wave while
+// the voice goes (.talking) and, once it has finished, the slide moves on by itself. Without a Polish voice (or if the browser refuses to speak) the
 // same thing happens silently on a timer. Reached going back (←) the text is just shown.
 const PRES_WORD_MS = 160; // silent fallback: time per word
 const PRES_VOICE_PAUSE_MS = 1600; // pause after the last word before moving on
@@ -2253,6 +2258,67 @@ function presVoiceStop() {
   pres.estTimers = [];
   if (window.speechSynthesis) speechSynthesis.cancel();
   presSlides.forEach((s) => s.classList.remove("talking"));
+  cancelAnimationFrame(pres.raf);
+  pres.raf = 0;
+  pres.energy = 0;
+  pres.wave.fill(0);
+}
+
+// The red line is drawn as a row of dots joined by a thin line (canvas #presWave). While the
+// voice goes the dots jump up and down like a sound wave — every spoken word kicks them harder
+// (pres.energy = 1, then it decays) — and when it stops they settle back into a flat line.
+function presTalkOn(slide) {
+  slide.classList.add("talking");
+  if (!pres.raf) pres.raf = requestAnimationFrame(presWaveFrame);
+}
+
+function presWaveFrame() {
+  pres.raf = 0;
+  const canvas = document.getElementById("presWave");
+  const talking = canvas.closest(".ps").classList.contains("talking");
+  const n = pres.wave.length;
+  pres.energy = Math.max(pres.energy * 0.92, talking ? 0.2 : 0);
+  if (pres.tick++ % 4 === 0) {
+    for (let i = 0; i < n; i++) {
+      const calmer = 0.3 + 0.7 * Math.sin((i / (n - 1)) * Math.PI); // quieter towards both ends
+      pres.rand[i] = (Math.random() * 2 - 1) * calmer;
+    }
+  }
+  let moving = false;
+  for (let i = 0; i < n; i++) {
+    pres.wave[i] += (pres.rand[i] * pres.energy - pres.wave[i]) * 0.35;
+    if (Math.abs(pres.wave[i]) > 0.004) moving = true;
+  }
+
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const u = w / 68.4; // 1cqw in pixels (the canvas is 68.4cqw wide)
+  const pad = 1.2 * u; // keep the end dots (and their glow) inside the canvas
+  const pts = pres.wave.map((v, i) => [pad + (i / (n - 1)) * (w - 2 * pad), h / 2 - v * h * 0.46]);
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.strokeStyle = ctx.fillStyle = "#ff3030";
+  ctx.shadowColor = "#ff3030";
+  ctx.shadowBlur = 1.2 * u;
+  ctx.lineWidth = 0.45 * u;
+  ctx.beginPath();
+  pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+  ctx.stroke();
+  pts.forEach(([x, y]) => {
+    ctx.beginPath();
+    ctx.arc(x, y, 0.75 * u, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  if (talking || moving || pres.energy > 0.01) pres.raf = requestAnimationFrame(presWaveFrame);
 }
 
 function presVoiceShowAll(slide) {
@@ -2272,9 +2338,14 @@ function presVoiceStart(slide) {
   };
   const silent = () => {
     if (!alive()) return;
-    slide.classList.add("talking");
+    presTalkOn(slide);
     words.forEach((w, i) =>
-      pres.estTimers.push(setTimeout(() => w.classList.add("said"), i * PRES_WORD_MS))
+      pres.estTimers.push(
+        setTimeout(() => {
+          w.classList.add("said");
+          pres.energy = 1;
+        }, i * PRES_WORD_MS)
+      )
     );
     pres.estTimers.push(setTimeout(finish, words.length * PRES_WORD_MS + 350));
   };
@@ -2307,16 +2378,22 @@ function presVoiceSpeak(words, alive, finish, silent) {
     if (!alive()) return;
     started = true;
     clearTimeout(pres.voiceTimer);
-    slide.classList.add("talking");
+    presTalkOn(slide);
     // not every voice reports word boundaries — estimate until the first real one arrives
     words.forEach((w, i) =>
-      pres.estTimers.push(setTimeout(() => w.classList.add("said"), 250 + i * 380))
+      pres.estTimers.push(
+        setTimeout(() => {
+          w.classList.add("said");
+          pres.energy = 1;
+        }, 250 + i * 380)
+      )
     );
   };
   utterance.onboundary = (e) => {
     if (!alive() || (e.name && e.name !== "word")) return;
     pres.estTimers.forEach(clearTimeout);
     pres.estTimers = [];
+    pres.energy = 1;
     words.forEach((w, i) => {
       if (offsets[i] <= e.charIndex) w.classList.add("said");
     });

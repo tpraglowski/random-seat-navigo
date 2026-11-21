@@ -1703,18 +1703,20 @@ textarea {
 .ps.active .pst-mid span:nth-child(4) { animation-delay: .45s; }
 
 /* 9. Grupy (escape room) */
-.prline { position: absolute; left: 15.8cqw; width: 68.4cqw; top: 27.6cqw; height: 1.1cqw; border-radius: .2cqw; background: #ff3030; transition: top .8s cubic-bezier(.6, 0, .2, 1); }
+.prline { position: absolute; left: 15.8cqw; width: 68.4cqw; top: 27.6cqw; height: 1.1cqw; border-radius: .2cqw; background: #ff3030; transition: top .8s cubic-bezier(.6, 0, .2, 1), opacity .4s ease; }
 .ps.active .prline { animation: pDraw .8s cubic-bezier(.6, 0, .2, 1) both; }
 @keyframes pDraw { from { transform: scaleX(0); } }
 .ps-9:not([data-now="0"]) .prline { top: 6.4cqw; }
 /* Kreska „mówi”: czyta tekst na głos (script.js), słowa dostają .said w chwili wypowiedzenia,
-   a kreska drga jak fala głosu (.talking). Po przejściu do kolejnego kroku tekst znika. */
-.pvoice { position: absolute; left: 14cqw; right: 14cqw; top: 32cqw; margin: 0; text-align: center; font-size: 2.8cqw; line-height: 1.5; color: #ff3030; text-shadow: 0 0 1.2cqw #ff303055; transition: opacity .35s ease; }
+   a w trakcie mowy (.talking) kreska blednie i pojawia się nad nią fala z punktów (canvas .pwave),
+   które skaczą w górę i w dół. Po przejściu do kolejnego kroku tekst znika. */
+.pwave { position: absolute; left: 15.8cqw; top: 21.65cqw; width: 68.4cqw; height: 13cqw; opacity: 0; transition: opacity .35s ease; pointer-events: none; }
+.ps-9.talking .pwave { opacity: 1; }
+.ps-9.talking .prline { opacity: .22; }
+.pvoice { position: absolute; left: 14cqw; right: 14cqw; top: 36.5cqw; margin: 0; text-align: center; font-size: 2.8cqw; line-height: 1.5; color: #ff3030; text-shadow: 0 0 1.2cqw #ff303055; transition: opacity .35s ease; }
 .pvoice span { display: inline-block; opacity: 0; transform: translateY(.8cqw) scale(.9); transition: opacity .3s ease, transform .35s ease; }
 .pvoice span.said { opacity: 1; transform: none; }
 .ps-9:not([data-now="0"]) .pvoice { opacity: 0; pointer-events: none; }
-.ps-9.active.talking .prline { transform-origin: center; animation: pDraw .8s cubic-bezier(.6, 0, .2, 1) both, pTalk .55s ease-in-out infinite; }
-@keyframes pTalk { 0%, 100% { transform: scaleY(1); } 20% { transform: scaleY(2.4); } 45% { transform: scaleY(.7); } 70% { transform: scaleY(1.9); } }
 .pgcard { position: absolute; top: 11.4cqw; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 1cqw; width: 20.1cqw; height: 31cqw; padding-top: 1cqw; border: .9cqw solid #ff3030; border-radius: 3cqw; background: #555; }
 .pgn { margin-bottom: .3cqw; font-size: 2.3cqw; line-height: 1.2; color: #fff; }
 .pchip { display: grid; place-items: center; width: 17.2cqw; height: 3.4cqw; border-radius: 2cqw; background: #ff3030; color: #000; font-size: 2cqw; }
