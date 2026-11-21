@@ -1728,7 +1728,6 @@ textarea {
 .ps .pchip[data-step] { transform: translateY(-7cqw) scale(.85); transition: opacity .3s ease var(--d, 0s), transform .55s cubic-bezier(.34, 1.56, .64, 1) var(--d, 0s), background-color .4s ease, box-shadow .4s ease; }
 .ps .pchip[data-step].on { transform: none; }
 .ps-9[data-now="2"] .pchip-lead { background: #fff; box-shadow: 0 0 1.4cqw #ff3030; }
-.pcall { position: absolute; left: 0; right: 0; top: 45cqw; margin: 0; text-align: center; font-size: 3.6cqw; line-height: 1.2; color: #ff3030; }
 
 /* 10. Wzór i instrukcja */
 .pfrac2 { position: absolute; left: 36cqw; top: 5.5cqw; display: grid; justify-items: center; width: 22cqw; font-size: 11cqw; line-height: 1; color: #ff3030; text-shadow: 0 0 1.4cqw #ff303066; }

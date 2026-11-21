@@ -2187,8 +2187,15 @@ const presentationBtn = document.getElementById("presentationBtn");
 const presOverlay = document.getElementById("presentation");
 const presStageEl = document.getElementById("presStage");
 const presSlides = [...presOverlay.querySelectorAll(".ps")];
+// Last step of each slide: animated elements (data-step) and spoken paragraphs (data-voice-step)
+// both define steps.
 const presMax = presSlides.map((s) =>
-  Math.max(0, ...[...s.querySelectorAll("[data-step]")].map((el) => Number(el.dataset.step)))
+  Math.max(
+    0,
+    ...[...s.querySelectorAll("[data-step], [data-voice-step]")].map((el) =>
+      Number(el.dataset.step ?? el.dataset.voiceStep)
+    )
+  )
 );
 const presFrames = presMax.reduce((sum, m) => sum + m + 1, 0);
 const pres = {
