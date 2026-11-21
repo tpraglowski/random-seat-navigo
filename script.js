@@ -2372,17 +2372,33 @@ function presVoiceStart(slide, line) {
   }
 }
 
+// Numbers are handed to the voice spelled out ("25." is otherwise read as an ordinal, "dwudziestej
+// piątej", instead of "dwadzieścia pięć"); the screen keeps showing the digits.
+const PL_ONES = ["zero", "jeden", "dwa", "trzy", "cztery", "pięć", "sześć", "siedem", "osiem", "dziewięć"];
+const PL_TEENS = ["dziesięć", "jedenaście", "dwanaście", "trzynaście", "czternaście", "piętnaście", "szesnaście", "siedemnaście", "osiemnaście", "dziewiętnaście"];
+const PL_TENS = ["", "", "dwadzieścia", "trzydzieści", "czterdzieści", "pięćdziesiąt", "sześćdziesiąt", "siedemdziesiąt", "osiemdziesiąt", "dziewięćdziesiąt"];
+function presNumberWords(n) {
+  if (n < 10) return PL_ONES[n];
+  if (n < 20) return PL_TEENS[n - 10];
+  if (n < 100) return PL_TENS[Math.floor(n / 10)] + (n % 10 ? " " + PL_ONES[n % 10] : "");
+  return String(n);
+}
+function presSay(word) {
+  return word.replace(/\d+/g, (d) => presNumberWords(Number(d)));
+}
+
 function presVoiceSpeak(words, alive, finish, silent) {
   const slide = words[0].closest(".ps");
   const voice = presPolishVoice();
   if (!voice) return silent();
+  const spoken = words.map((w) => presSay(w.textContent)); // what the voice gets, word by word
   const offsets = [];
   let pos = 0;
-  words.forEach((w) => {
+  spoken.forEach((w) => {
     offsets.push(pos);
-    pos += w.textContent.length + 1;
+    pos += w.length + 1;
   });
-  const utterance = new SpeechSynthesisUtterance(words.map((w) => w.textContent).join(" "));
+  const utterance = new SpeechSynthesisUtterance(spoken.join(" "));
   utterance.voice = voice;
   utterance.lang = voice.lang;
   utterance.rate = 0.88;
