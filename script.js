@@ -1,5 +1,5 @@
 import { firebaseConfig } from './firebase-config.js';
-import { ACCESS_CODE } from './access-config.js';
+import { ACCESS_CODE, VIEWER_CODE } from './access-config.js';
 import { createMemeAnimations, createAxolotl } from './memes.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';
@@ -108,7 +108,14 @@ const accessError = document.getElementById("accessError");
 
 const ACCESS_UNLOCKED_KEY = "random-seat-navigo-unlocked";
 
-function unlockApp() {
+// View-only access: a second code that shows just the presentation and the
+// group draw — the class itself (students, plan, rules) cannot be edited.
+let viewerMode = false;
+
+function unlockApp(viewer = false) {
+  viewerMode = viewer;
+  document.body.classList.toggle("viewer-mode", viewer);
+  if (viewer) currentMode = "groups";
   accessGate.classList.add("hidden");
   appRoot.classList.remove("hidden");
   topBar.classList.remove("hidden");
@@ -120,14 +127,17 @@ function unlockApp() {
 
 accessForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  if (accessCodeInput.value === ACCESS_CODE) {
+  const code = accessCodeInput.value;
+  const isFull = code === ACCESS_CODE;
+  const isViewer = !isFull && !!VIEWER_CODE && code === VIEWER_CODE;
+  if (isFull || isViewer) {
     try {
-      localStorage.setItem(ACCESS_UNLOCKED_KEY, "1");
+      localStorage.setItem(ACCESS_UNLOCKED_KEY, isFull ? "1" : "viewer");
     } catch {
       // ignore
     }
     accessError.classList.add("hidden");
-    unlockApp();
+    unlockApp(isViewer);
   } else {
     accessError.classList.remove("hidden");
     accessCodeInput.value = "";
@@ -260,6 +270,7 @@ function escapeHtml(str) {
 }
 
 function saveClasses(immediate = false) {
+  if (viewerMode) return; // view-only: nothing is written back
   cacheClasses();
   if (saveTimer) clearTimeout(saveTimer);
   const write = () => setDoc(classesDocRef, { value: state.classes }).catch((e) => console.error(e));
@@ -548,7 +559,12 @@ function renderGroupControls() {
 window.addEventListener("resize", moveAllPills);
 
 function setMode(mode) {
+  if (viewerMode) mode = "groups";
   currentMode = mode;
+  if (viewerMode) {
+    applyMode();
+    return;
+  }
   try {
     localStorage.setItem(MODE_KEY, mode);
   } catch {
@@ -1678,6 +1694,7 @@ function toggleBlocked(key) {
 // ---------- Modal ----------
 
 function openEditModal() {
+  if (viewerMode) return;
   renderModalContents();
   editModal.classList.remove("hidden");
 }
@@ -2724,11 +2741,12 @@ if (halloweenActive()) {
 // Runs last, once every const/let above this point has been initialized —
 // init() (called from unlockApp) reaches back up to things like `state` that
 // are declared further down the file than the gate code near the top.
-let alreadyUnlocked = false;
+let alreadyUnlocked = null;
 try {
-  alreadyUnlocked = localStorage.getItem(ACCESS_UNLOCKED_KEY) === "1";
+  alreadyUnlocked = localStorage.getItem(ACCESS_UNLOCKED_KEY);
 } catch {
   // ignore
 }
-if (alreadyUnlocked) unlockApp();
+if (alreadyUnlocked === "1") unlockApp();
+else if (alreadyUnlocked === "viewer" && VIEWER_CODE) unlockApp(true);
 showHalloweenNote();

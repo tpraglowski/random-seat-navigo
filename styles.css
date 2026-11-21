@@ -1750,3 +1750,12 @@ textarea {
 .pres-overlay.is-idle .pres-bar { opacity: 0; pointer-events: none; }
 .pres-overlay.is-idle .pres-stage { cursor: none; }
 @media (prefers-reduced-motion: reduce) { .pt-nums span { animation: none !important; } }
+
+/* View-only access (second code): only the presentation + group draw */
+body.viewer-mode #modeTabs,
+body.viewer-mode #addClassBtn,
+body.viewer-mode #editClassBtn,
+body.viewer-mode #seatsOnlySection,
+body.viewer-mode #personOnlySection,
+body.viewer-mode #showGroupsOnBoardBtn,
+body.viewer-mode #clearGroupColorsBtn { display: none !important; }

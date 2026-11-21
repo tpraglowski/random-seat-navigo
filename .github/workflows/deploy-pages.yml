@@ -24,11 +24,13 @@ jobs:
       - name: Prepare site
         env:
           ACCESS_CODE: ${{ secrets.ACCESS_CODE }}
+          VIEWER_CODE: ${{ secrets.VIEWER_CODE }}
         run: |
           mkdir -p dist
           cp index.html script.js memes.js styles.css favicon.svg axolotl-pink.png halloween.mp4 firebase-config.js dist/
           cat > dist/access-config.js <<EOF
           export const ACCESS_CODE = '${ACCESS_CODE}';
+          export const VIEWER_CODE = '${VIEWER_CODE}';
           EOF
 
           # Cache-bust the JS/CSS on every deploy — browsers cache ES module
